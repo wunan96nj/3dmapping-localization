@@ -4,6 +4,7 @@ import base64
 import os
 import logging
 
+
 def find_photos_filenames(full_dir_path):
     for root, ds, fs in os.walk(full_dir_path):
         for f in fs:
@@ -28,7 +29,7 @@ def post_to_server(api_url, token, image_base_dir, seq_base=0):
 
 
 def submit_image(api_url, token, imagePath, seq):
-    logging.info("submit_image...start...")
+    print("submit_image...start...")
     complete_url = api_url + '/captureb64'
     data = {
         "token": token,
@@ -61,10 +62,11 @@ def submit_image(api_url, token, imagePath, seq):
     # print(json_data)
     r = requests.post(complete_url, data=json_data)
     print(r.text)
-    logging.info("submit_image...end...")
+    print("submit_image...end...")
+
 
 def StartMapConstruction(url, token, mapName, windowSize):
-    logging.info("StartMapConstruction...start...")
+    print("StartMapConstruction...start...")
     complete_url = url + '/construct'
     data = {
         "token": token,
@@ -80,10 +82,11 @@ def StartMapConstruction(url, token, mapName, windowSize):
     json_data = json.dumps(data)
     r = requests.post(complete_url, data=json_data)
     print(r.text)
-    logging.info("StartMapConstruction...end...")
+    print("StartMapConstruction...end...")
+
 
 def ClearWorkspace(url, token, deleteAnchorImage):
-    logging.info("ClearWorkspace...start...")
+    print("ClearWorkspace...start...")
     complete_url = url + '/clear'
     data = {
         "token": token,
@@ -95,7 +98,7 @@ def ClearWorkspace(url, token, deleteAnchorImage):
 
     r = requests.post(complete_url, data=json_data)
     print(r.text)
-    logging.info("ClearWorkspace...end...")
+    print("ClearWorkspace...end...")
 
 
 def main():
