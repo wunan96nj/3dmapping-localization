@@ -2,14 +2,23 @@ import requests
 import json
 import base64
 import os
-import logging
+from PIL import Image
 
 
 def find_photos_filenames(full_dir_path):
     for root, ds, fs in os.walk(full_dir_path):
         for f in fs:
             fullname = os.path.join(root, f)
-            yield fullname
+            if f.lower().endswith('.png'):
+                yield fullname
+            elif f.lower().endswith('.jpg'):
+                print("convert jpg 2 png...start...")
+                file_base_name = (f.split("."))[0]
+                img = Image.open(fullname)
+                png_full_name = os.path.join(root, file_base_name) + ".png"
+                img.save(png_full_name)
+                print("convert jpg 2 png...end...")
+                yield png_full_name
 
 
 def ConvertToBase64(src_filepath):
