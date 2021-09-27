@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 import uuid
+import base64
 from flask import Flask, jsonify, request
 from flask_restful import reqparse, abort, Api, Resource
 
@@ -69,11 +70,21 @@ class TodoList(Resource):
 
 class CapturePhoto(Resource):
 
+    def save_files(json_data, png_file_full_path, json_file_full_path, self):
+        b64 = json_data['b64']
+        json_data['b64']="omitted"
+        png_base64_bytes = b64.encode('ascii')
+        png_bytes = base64.b64decode(png_base64_bytes)
+        with open(png_file_full_path, 'wb') as f:
+            f.write(png_bytes)
+        josn_base64_bytes = str(json_data).encode('ascii')
+        with open(json_file_full_path, 'wb') as f:
+            f.write(josn_base64_bytes)
+
     def post(self):
-        file_uuid = str(uuid.uuid4());
-        image_base_dir = '~/capture/images'
+        file_uuid = uuid.uuid4().hex;
+        image_base_dir = '/Users/akui/Desktop/images/'
         json_data = request.get_json(force=True)
-        print(json_data)
         token = json_data['token']
         bank = json_data['bank']
         run = json_data['run']
@@ -96,6 +107,13 @@ class CapturePhoto(Resource):
         ox = json_data['ox']
         oy = json_data['oy']
         b64 = json_data['b64']
+        png_file_full_path = image_base_dir + str(
+            bank) + "/" + file_uuid + ".png"
+        json_file_path = image_base_dir + str(
+            bank) + "/" + file_uuid + ".json"
+        print("write png file to " + png_file_full_path)
+        print("write json file to " + json_file_path)
+        CapturePhoto.save_files(json_data, png_file_full_path, json_file_path,self)
         return jsonify(file_uuid=file_uuid, image_base_dir=image_base_dir)
 
 

@@ -69,7 +69,7 @@ def submit_image(api_url, token, imagePath, seq):
     }
 
     json_data = json.dumps(data)
-    print(json_data)
+    # print(json_data)
     r = requests.post(complete_url, data=json_data)
     print(r.text)
     print("submit_image...end...")
