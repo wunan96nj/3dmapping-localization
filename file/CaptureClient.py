@@ -3,6 +3,7 @@ import json
 import base64
 import os
 from PIL import Image
+from datetime import datetime
 
 
 def find_photos_filenames(full_dir_path):
@@ -68,7 +69,7 @@ def submit_image(api_url, token, imagePath, seq):
     }
 
     json_data = json.dumps(data)
-    # print(json_data)
+    print(json_data)
     r = requests.post(complete_url, data=json_data)
     print(r.text)
     print("submit_image...end...")
@@ -110,8 +111,17 @@ def ClearWorkspace(url, token, deleteAnchorImage):
     print("ClearWorkspace...end...")
 
 
+def printTimestamp():
+    now = datetime.now()
+    dt_string = now.strftime("%Y/%m/%d/ %H:%M:%S")
+    print("date and time =", dt_string)
+    return
+
+
 def main():
-    api_url = "https://api.immersal.com"
+    printTimestamp()
+    # api_url = "https://api.immersal.com"
+    api_url = "http://localhost:5444/capture-photo"
     token = "192b47014ee982495df0a08674ac49a11eca4cb4427e3115a0254b89d07587cc"
     image_base_dir = '/Users/akui/Desktop/south-building/images'
     seq_base = 0
@@ -121,6 +131,7 @@ def main():
     post_to_server(api_url, token, image_base_dir, seq_base)
     StartMapConstruction(api_url, token, map_name, windowSize)
     ClearWorkspace(api_url, token, deleteAnchorImage)
+    printTimestamp()
 
 
 if __name__ == "__main__":
