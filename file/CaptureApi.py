@@ -72,7 +72,7 @@ class CapturePhoto(Resource):
 
     def save_files(json_data, png_file_full_path, json_file_full_path, self):
         b64 = json_data['b64']
-        json_data['b64']="omitted"
+        json_data['b64'] = "omitted"
         png_base64_bytes = b64.encode('ascii')
         png_bytes = base64.b64decode(png_base64_bytes)
         with open(png_file_full_path, 'wb') as f:
@@ -113,8 +113,11 @@ class CapturePhoto(Resource):
             bank) + "/" + file_uuid + ".json"
         print("write png file to " + png_file_full_path)
         print("write json file to " + json_file_path)
-        CapturePhoto.save_files(json_data, png_file_full_path, json_file_path,self)
-        return jsonify(file_uuid=file_uuid, image_base_dir=image_base_dir)
+        CapturePhoto.save_files(json_data, png_file_full_path, json_file_path,
+                                self)
+        return jsonify(file_uuid=file_uuid,
+                       png_file_full_path=png_file_full_path,
+                       json_file_path=json_file_path)
 
 
 ##
