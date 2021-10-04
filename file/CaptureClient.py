@@ -6,20 +6,23 @@ from PIL import Image
 from datetime import datetime
 
 
-def find_photos_filenames(full_dir_path):
+def find_photos_filenames(full_dir_path, isPng=False):
     for root, ds, fs in os.walk(full_dir_path):
         for f in fs:
             fullname = os.path.join(root, f)
-            if f.lower().endswith('.png'):
+            if isPng:
+                if f.lower().endswith('.png'):
+                    yield fullname
+                elif f.lower().endswith('.jpg'):
+                    print("convert jpg 2 png...start...")
+                    file_base_name = (f.split("."))[0]
+                    img = Image.open(fullname)
+                    png_full_name = os.path.join(root, file_base_name) + ".png"
+                    img.save(png_full_name)
+                    print("convert jpg 2 png...end...")
+                    yield png_full_name
+            else:
                 yield fullname
-            elif f.lower().endswith('.jpg'):
-                print("convert jpg 2 png...start...")
-                file_base_name = (f.split("."))[0]
-                img = Image.open(fullname)
-                png_full_name = os.path.join(root, file_base_name) + ".png"
-                img.save(png_full_name)
-                print("convert jpg 2 png...end...")
-                yield png_full_name
 
 
 def ConvertToBase64(src_filepath):
@@ -82,7 +85,6 @@ def StartMapConstruction(url, token, mapName, windowSize):
         "token": token,
         "bank": 0,
         "name": mapName,
-
         # If the images are shot in sequence like a video stream, this optional parameter can be used to limit
         # image matching to x previous and following frames.
         # This can decrease map construction times and help constructing maps in repetitive environments.

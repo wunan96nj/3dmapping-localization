@@ -4,68 +4,22 @@ import uuid
 import base64
 from flask import Flask, jsonify, request
 from flask_restful import reqparse, abort, Api, Resource
+import os
+import subprocess
+import sys
+import write_to_nw_db
 
 app = Flask(__name__)
 api = Api(app)
 
-TODOS = {
-    'todo1': {'task': 'build an API'},
-    'todo2': {'task': '?????'},
-    'todo3': {'task': 'profit!'},
-}
-
-
-def abort_if_todo_doesnt_exist(todo_id):
-    if todo_id not in TODOS:
-        abort(404, message="Todo {} doesn't exist".format(todo_id))
-
-
 parser = reqparse.RequestParser()
 parser.add_argument('task', type=str)
 
-
-# Todo
-#   show a single todo item and lets you delete them
-class Todo(Resource):
-    def get(self, todo_id):
-        abort_if_todo_doesnt_exist(todo_id)
-        return TODOS[todo_id]
-
-    def delete(self, todo_id):
-        abort_if_todo_doesnt_exist(todo_id)
-        del TODOS[todo_id]
-        return '', 204
-
-    def put(self, todo_id):
-        args = parser.parse_args()
-        task = {'task': args['task']}
-        TODOS[todo_id] = task
-        return task, 201
-
-
-# TodoList
-#   shows a list of all todos, and lets you POST to add new tasks
-class TodoList(Resource):
-    def get(self):
-        return TODOS
-
-    # curl http://localhost:5000/todos/todo3 -d "task=something different" -X PUT -v
-    def post(self):
-        file_uuid = str(uuid.uuid4());
-        args = parser.parse_args()
-        todo_id = int(max(TODOS.keys()).lstrip('todo')) + 1
-        todo_id = 'todo%i' % todo_id
-        TODOS[todo_id] = {'task': args['task']}
-        #
-        b64 = args['b64']
-        altitude = args['altitude']
-        longitude = args['longitude']
-        b64 = args['b64']
-        b64 = args['b64']
-        b64 = args['b64']
-        b64 = args['b64']
-
-        return TODOS[todo_id], 201
+COLMAP = "/Users/akui/eclipse-workspace/py-colmap-rest-gate/file/COLMAP.app/Contents/MacOS/colmap"
+workspace_dir = "/Users/akui/Desktop/"
+image_base_dir = workspace_dir + "images/"
+json_base_dir = workspace_dir + "json/"
+sparse_dir = workspace_dir + 'sparse/'
 
 
 class CapturePhoto(Resource):
@@ -83,7 +37,6 @@ class CapturePhoto(Resource):
 
     def post(self):
         file_uuid = uuid.uuid4().hex;
-        image_base_dir = '/Users/akui/Desktop/images/'
         json_data = request.get_json(force=True)
         token = json_data['token']
         bank = json_data['bank']
@@ -107,26 +60,106 @@ class CapturePhoto(Resource):
         ox = json_data['ox']
         oy = json_data['oy']
         b64 = json_data['b64']
-        png_file_full_path = image_base_dir + str(
-            bank) + "/" + file_uuid + ".png"
-        json_file_path = image_base_dir + str(
+        if not os.path.exists(image_base_dir + str(bank)):
+            os.mkdir(image_base_dir + str(bank))
+        if not os.path.exists(json_base_dir + str(bank)):
+            os.mkdir(json_base_dir + str(bank))
+        jpg_file_full_path = image_base_dir + str(
+            bank) + "/" + file_uuid + ".jpg"
+        json_file_path = json_base_dir + str(
             bank) + "/" + file_uuid + ".json"
-        print("write png file to " + png_file_full_path)
+        print("write png file to " + jpg_file_full_path)
         print("write json file to " + json_file_path)
-        CapturePhoto.save_files(json_data, png_file_full_path, json_file_path,
+        CapturePhoto.save_files(json_data, jpg_file_full_path, json_file_path,
                                 self)
         return jsonify(file_uuid=file_uuid,
-                       png_file_full_path=png_file_full_path,
+                       png_file_full_path=jpg_file_full_path,
                        json_file_path=json_file_path)
+
+
+class StartMapConstruction(Resource):
+
+    def build(bank, self):
+        print("StartMapConstruction build() start.....")
+        image_dir = image_base_dir + str(
+            bank) + "/"
+
+        print("workspace_dir: " + workspace_dir)
+        print("image_dir: " + image_dir)
+
+        print("1. feature_extractor")
+        pIntrisics = subprocess.Popen(
+            [COLMAP, "feature_extractor", "--database_path",
+             workspace_dir + 'database.db', "--image_path", image_dir,
+             "--ImageReader.camera_model", "SIMPLE_PINHOLE"])
+        pIntrisics.wait()
+
+        print("2. Matching")
+        pIntrisics = subprocess.Popen(
+            [COLMAP, "exhaustive_matcher", "--database_path",
+             workspace_dir + 'database.db'])
+        pIntrisics.wait()
+        if not os.path.exists(sparse_dir):
+            os.mkdir(sparse_dir)
+
+        print("3. point_triangulator")
+        pIntrisics = subprocess.Popen(
+            [COLMAP, "mapper", "--database_path", workspace_dir + 'database.db',
+             "--image_path", image_dir, "--output_path",
+             sparse_dir, "--Mapper.ba_refine_focal_length", "0",
+             "--Mapper.ba_refine_extra_params", "0"])
+        pIntrisics.wait()
+        print("StartMapConstruction build() end .....")
+        return
+
+    def gen_newdb(bank, self):
+        print("StartMapConstruction gen_newdb() start .....")
+        new_db_dir_path = sparse_dir + str(bank) + "/"
+        if not os.path.exists(new_db_dir_path):
+            os.mkdir(new_db_dir_path)
+        cameras, images, points = write_to_nw_db.read_cip(new_db_dir_path)
+        print(cameras)
+
+        db_images, kp_table, des_table = write_to_nw_db.read_database(
+            new_db_dir_path)
+        # print(db_images)
+
+        points_pos, points_des, points_rgb = write_to_nw_db.get_points_pos_des(
+            cameras, images,
+            points,
+            kp_table,
+            des_table)
+
+        # print(len(points))
+        # print(len(points_pos))
+        # print(len(points_des))
+        # print(points)
+        print(list(points_pos[-1]))
+        print(list(points_des[-1]))
+        print(list(points_rgb[-1]))
+        write_to_nw_db.write_points3D_nw_db(points_pos, points_rgb, points_des,
+                                            "nw_db/database.db")
+        print("StartMapConstruction gen_newdb() end .....")
+        return
+
+    def post(self):
+        print("StartMapConstruction BEGIN")
+        json_data = request.get_json(force=True)
+        bank = json_data['bank']
+        StartMapConstruction.build(bank, self)
+        StartMapConstruction.gen_newdb(bank, self)
+        print("StartMapConstruction FIN")
+        return
 
 
 ##
 ## Actually setup the Api resource routing here
 ##
-api.add_resource(TodoList, '/todos')
-api.add_resource(Todo, '/todos/<todo_id>')
+# api.add_resource(TodoList, '/todos')
+# api.add_resource(Todo, '/todos/<todo_id>')
 # http://localhost:5444/capture-photo
 api.add_resource(CapturePhoto, '/capture-photo/captureb64')
+api.add_resource(StartMapConstruction, '/capture-photo/construct')
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5444, debug=True)
