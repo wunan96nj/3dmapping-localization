@@ -81,30 +81,34 @@ class StartMapConstruction(Resource):
 
     def build(bank, self):
         print("StartMapConstruction build() start.....")
-        image_dir = image_base_dir + str(
-            bank) + "/"
-
+        image_dir = image_base_dir + str(bank) + "/"
+        database_dir = sparse_dir + str(bank) + "/"
         print("workspace_dir: " + workspace_dir)
         print("image_dir: " + image_dir)
+        print("database_dir: " + image_dir)
+
+        if not os.path.exists(sparse_dir):
+            os.mkdir(sparse_dir)
+
+        if not os.path.exists(database_dir):
+            os.mkdir(database_dir)
 
         print("1. feature_extractor")
         pIntrisics = subprocess.Popen(
             [COLMAP, "feature_extractor", "--database_path",
-             workspace_dir + 'database.db', "--image_path", image_dir,
+             database_dir + 'database.db', "--image_path", image_dir,
              "--ImageReader.camera_model", "SIMPLE_PINHOLE"])
         pIntrisics.wait()
 
         print("2. Matching")
         pIntrisics = subprocess.Popen(
             [COLMAP, "exhaustive_matcher", "--database_path",
-             workspace_dir + 'database.db'])
+             database_dir + 'database.db'])
         pIntrisics.wait()
-        if not os.path.exists(sparse_dir):
-            os.mkdir(sparse_dir)
 
         print("3. point_triangulator")
         pIntrisics = subprocess.Popen(
-            [COLMAP, "mapper", "--database_path", workspace_dir + 'database.db',
+            [COLMAP, "mapper", "--database_path", database_dir + 'database.db',
              "--image_path", image_dir, "--output_path",
              sparse_dir, "--Mapper.ba_refine_focal_length", "0",
              "--Mapper.ba_refine_extra_params", "0"])
@@ -117,13 +121,16 @@ class StartMapConstruction(Resource):
         new_db_dir_path = sparse_dir + str(bank) + "/"
         if not os.path.exists(new_db_dir_path):
             os.mkdir(new_db_dir_path)
+        if not os.path.exists(new_db_dir_path + "nw_db/"):
+            os.mkdir(new_db_dir_path + "nw_db/")
+        print("1. write_to_nw_db.read_cip")
         cameras, images, points = write_to_nw_db.read_cip(new_db_dir_path)
         print(cameras)
-
+        print("2. write_to_nw_db.read_database")
         db_images, kp_table, des_table = write_to_nw_db.read_database(
             new_db_dir_path)
         # print(db_images)
-
+        print("3. write_to_nw_db.get_points_pos_des")
         points_pos, points_des, points_rgb = write_to_nw_db.get_points_pos_des(
             cameras, images,
             points,
@@ -137,6 +144,7 @@ class StartMapConstruction(Resource):
         print(list(points_pos[-1]))
         print(list(points_des[-1]))
         print(list(points_rgb[-1]))
+        print("4. write_to_nw_db.write_points3D_nw_db")
         write_to_nw_db.write_points3D_nw_db(points_pos, points_rgb, points_des,
                                             "nw_db/database.db")
         print("StartMapConstruction gen_newdb() end .....")
