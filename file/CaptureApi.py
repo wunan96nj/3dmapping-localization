@@ -146,7 +146,7 @@ class StartMapConstruction(Resource):
         print(list(points_rgb[-1]))
         print("4. write_to_nw_db.write_points3D_nw_db")
         write_to_nw_db.write_points3D_nw_db(points_pos, points_rgb, points_des,
-                                            "nw_db/database.db")
+                                            new_db_dir_path + "nw_db/database.db")
         print("StartMapConstruction gen_newdb() end .....")
         return
 
