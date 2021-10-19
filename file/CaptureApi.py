@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 import uuid
 import base64
+import shutil
 from flask import Flask, jsonify, request
 from flask_restful import reqparse, abort, Api, Resource
 import os
@@ -20,6 +21,7 @@ workspace_dir = "/Users/akui/Desktop/"
 image_base_dir = workspace_dir + "images/"
 json_base_dir = workspace_dir + "json/"
 sparse_dir = workspace_dir + 'sparse/'
+database_name = 'database.db'
 
 
 class CapturePhoto(Resource):
@@ -82,33 +84,36 @@ class StartMapConstruction(Resource):
     def build(bank, self):
         print("StartMapConstruction build() start.....")
         image_dir = image_base_dir + str(bank) + "/"
-        database_dir = sparse_dir + str(bank) + "/"
-        print("workspace_dir: " + workspace_dir)
+        sparse_dir_bank = sparse_dir + str(bank) + "/"
+        tmp_database_dir = sparse_dir_bank + "temp/"
         print("image_dir: " + image_dir)
-        print("database_dir: " + image_dir)
+        print("sparse_dir_bank: " + sparse_dir_bank)
+        print("tmp_database_dir: " + tmp_database_dir)
 
         if not os.path.exists(sparse_dir):
             os.mkdir(sparse_dir)
-
-        if not os.path.exists(database_dir):
-            os.mkdir(database_dir)
+        if not os.path.exists(sparse_dir_bank):
+            os.mkdir(sparse_dir_bank)
+        if not os.path.exists(tmp_database_dir):
+            os.mkdir(tmp_database_dir)
 
         print("1. feature_extractor")
         pIntrisics = subprocess.Popen(
             [COLMAP, "feature_extractor", "--database_path",
-             database_dir + 'database.db', "--image_path", image_dir,
+             tmp_database_dir + database_name, "--image_path", image_dir,
              "--ImageReader.camera_model", "SIMPLE_PINHOLE"])
         pIntrisics.wait()
 
         print("2. Matching")
         pIntrisics = subprocess.Popen(
             [COLMAP, "exhaustive_matcher", "--database_path",
-             database_dir + 'database.db'])
+             tmp_database_dir + database_name])
         pIntrisics.wait()
 
         print("3. point_triangulator")
         pIntrisics = subprocess.Popen(
-            [COLMAP, "mapper", "--database_path", database_dir + 'database.db',
+            [COLMAP, "mapper", "--database_path",
+             tmp_database_dir + database_name,
              "--image_path", image_dir, "--output_path",
              sparse_dir, "--Mapper.ba_refine_focal_length", "0",
              "--Mapper.ba_refine_extra_params", "0"])
@@ -118,18 +123,17 @@ class StartMapConstruction(Resource):
 
     def gen_newdb(bank, self):
         print("StartMapConstruction gen_newdb() start .....")
-        new_db_dir_path = sparse_dir + str(bank) + "/"
-        if not os.path.exists(new_db_dir_path):
-            os.mkdir(new_db_dir_path)
-        if not os.path.exists(new_db_dir_path + "nw_db/"):
-            os.mkdir(new_db_dir_path + "nw_db/")
+        sparse_dir_bank = sparse_dir + str(bank) + "/"
+        tmp_database_dir = sparse_dir_bank + "/temp/"
+        print("sparse_dir_bank: " + sparse_dir_bank)
+        print("tmp_database_dir: " + tmp_database_dir)
         print("1. write_to_nw_db.read_cip")
-        cameras, images, points = write_to_nw_db.read_cip(new_db_dir_path)
+        cameras, images, points = write_to_nw_db.read_cip(sparse_dir_bank)
         print(cameras)
         print("2. write_to_nw_db.read_database")
         db_images, kp_table, des_table = write_to_nw_db.read_database(
-            new_db_dir_path)
-        # print(db_images)
+            tmp_database_dir)
+
         print("3. write_to_nw_db.get_points_pos_des")
         points_pos, points_des, points_rgb = write_to_nw_db.get_points_pos_des(
             cameras, images,
@@ -146,8 +150,17 @@ class StartMapConstruction(Resource):
         print(list(points_rgb[-1]))
         print("4. write_to_nw_db.write_points3D_nw_db")
         write_to_nw_db.write_points3D_nw_db(points_pos, points_rgb, points_des,
-                                            new_db_dir_path + "nw_db/database.db")
+                                            sparse_dir_bank + database_name)
         print("StartMapConstruction gen_newdb() end .....")
+        return
+
+    def remove_useless_files(bank, self):
+        print("StartMapConstruction remove_useless_files() start .....")
+        sparse_dir_bank = sparse_dir + str(bank) + "/"
+        tmp_database_dir = sparse_dir_bank + "temp/"
+        if os.path.exists(tmp_database_dir):
+            shutil.rmtree(tmp_database_dir, ignore_errors=True)
+        print("StartMapConstruction remove_useless_files() end .....")
         return
 
     def post(self):
@@ -156,6 +169,7 @@ class StartMapConstruction(Resource):
         bank = json_data['bank']
         StartMapConstruction.build(bank, self)
         StartMapConstruction.gen_newdb(bank, self)
+        StartMapConstruction.remove_useless_files(bank, self)
         print("StartMapConstruction FIN")
         return
 
