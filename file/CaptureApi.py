@@ -160,6 +160,11 @@ class StartMapConstruction(Resource):
         tmp_database_dir = sparse_dir_bank + "temp/"
         if os.path.exists(tmp_database_dir):
             shutil.rmtree(tmp_database_dir, ignore_errors=True)
+        if os.path.exists(sparse_dir_bank + "project.ini"):
+            os.remove(sparse_dir_bank + "project.ini")
+        if os.path.exists(sparse_dir_bank + "points3D.bin"):
+            os.remove(sparse_dir_bank + "points3D.bin")
+
         print("StartMapConstruction remove_useless_files() end .....")
         return
 
