@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 import uuid
+import numpy
+import cv2
+import time
 import base64
 import shutil
 from flask import Flask, jsonify, request
@@ -9,6 +12,9 @@ import os
 import subprocess
 import sys
 import write_to_nw_db
+import get_point_pos_des
+import database
+from scipy.spatial.transform import Rotation as R
 
 app = Flask(__name__)
 api = Api(app)
@@ -179,7 +185,91 @@ class StartMapConstruction(Resource):
         return
 
 
-##
+class QueryLocal(Resource):
+    def post(self):
+        print("QueryLocal BEGIN")
+        json_data = request.get_json(force=True)
+        bank = json_data['bank']
+        QueryLocal.query_local(bank, self)
+        print("QueryLocal FIN")
+        return
+
+    def correct_colmap_q(qvec):
+        ret = numpy.roll(qvec, -1)
+        return ret
+
+    def query_local(bank, self):
+        print("QueryLocal query_local() start .....")
+        sparse_dir_bank = sparse_dir + str(bank) + "/"
+        db_path = sparse_dir_bank + database_name
+        print("QueryLocal query_local() db_path: " + db_path)
+        db_points_pos, db_points_rgb, db_points_des = get_point_pos_des.get_points_pos_des(
+            db_path)
+
+        # query database
+        query = database.COLMAPDatabase.connect(db_path)
+        rows = query.execute("SELECT params FROM cameras")
+        params = next(rows)
+        params = database.blob_to_array(params[0], numpy.float64)
+        print("QueryLocal query_local() db_points_pos: " + params)
+        query_kp = dict(
+            (image_id, database.blob_to_array(data, numpy.float32, (-1, 6)))
+            for image_id, data in query.execute(
+                "SELECT image_id, data FROM keypoints"))
+        query_des = dict(
+            (image_id, database.blob_to_array(data, numpy.uint8, (-1, 128)))
+            for image_id, data in query.execute(
+                "SELECT image_id, data FROM descriptors"))
+        # localize every image in the query database
+        tvec = []
+        qvec = []
+        for image_id in range(1, 2):
+            print(image_id)
+            fg_kp = query_kp[image_id]
+            fg_des = query_des[image_id]
+            # print(fg_kp.shape)
+            # print(fg_des.shape)
+            match_start = time.time()
+            bf = cv2.BFMatcher(cv2.NORM_L1, crossCheck=True)
+            matches = bf.match(db_points_des, fg_des)
+            matches = sorted(matches, key=lambda x: x.distance)
+            print("time used for knnMatching:", time.time() - match_start)
+            points2D_coordinate = []
+            points3D_coordinate = []
+
+            for match in matches:
+                # print(fg1_kp[match.queryIdx][:2])
+                # print(db_points_pos[match.trainIdx])
+                points2D_coordinate.append(fg_kp[match.trainIdx][:2])
+                points3D_coordinate.append(db_points_pos[match.queryIdx])
+            points2D_coordinate = numpy.asarray(points2D_coordinate)
+            points3D_coordinate = numpy.asarray(points3D_coordinate)
+            # localization with pycolmap absolute_pose_estimation
+            localize_start = time.time()
+            focal_length, principal_x, principal_y = params[0], params[1], \
+                                                     params[2]
+            # Intrinsic Matrix
+            camera_K = numpy.array([[focal_length, 0, principal_x],
+                                    [0, focal_length, principal_y],
+                                    [0, 0, 1]], dtype=numpy.double)
+            dist_coeffs = numpy.zeros((4, 1))
+
+            result = cv2.solvePnPRansac(points3D_coordinate,
+                                        points2D_coordinate, camera_K,
+                                        dist_coeffs, flags=cv2.SOLVEPNP_P3P,
+                                        iterationsCount=1000)
+
+            t = result[2].flatten()
+            q = R.from_rotvec(result[1].flatten()).as_quat()
+            print(result[0])
+            print(q, t)
+            q = QueryLocal.correct_colmap_q(q)
+            print("QueryLocal query_local() end .....")
+            return (q, t)
+
+    ##
+
+
 ## Actually setup the Api resource routing here
 ##
 # api.add_resource(TodoList, '/todos')
@@ -187,6 +277,7 @@ class StartMapConstruction(Resource):
 # http://localhost:5444/capture-photo
 api.add_resource(CapturePhoto, '/capture-photo/captureb64')
 api.add_resource(StartMapConstruction, '/capture-photo/construct')
+api.add_resource(QueryLocal, '/capture-photo/querylocal')
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5444, debug=True)

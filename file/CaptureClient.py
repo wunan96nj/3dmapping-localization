@@ -76,6 +76,7 @@ def submit_image(api_url, token, imagePath, seq):
     r = requests.post(complete_url, data=json_data)
     print(r.text)
     print("submit_image...end...")
+    return
 
 
 def StartMapConstruction(url, token, mapName, windowSize):
@@ -95,6 +96,22 @@ def StartMapConstruction(url, token, mapName, windowSize):
     r = requests.post(complete_url, data=json_data)
     print(r.text)
     print("StartMapConstruction...end...")
+    return
+
+
+# opencv-python
+def QueryLocal(url, token):
+    print("QueryLocal...start...")
+    complete_url = url + '/querylocal'
+    data = {
+        "token": token,
+        "bank": 0,
+    }
+    json_data = json.dumps(data)
+    r = requests.post(complete_url, data=json_data)
+    print(r.text)
+    print("StartMapConstruction...end...")
+    return
 
 
 def ClearWorkspace(url, token, deleteAnchorImage):
@@ -111,6 +128,7 @@ def ClearWorkspace(url, token, deleteAnchorImage):
     r = requests.post(complete_url, data=json_data)
     print(r.text)
     print("ClearWorkspace...end...")
+    return
 
 
 def printTimestamp():
@@ -130,8 +148,9 @@ def main():
     map_name = "pyFirstMap"
     windowSize = 0
     deleteAnchorImage = True
-    post_to_server(api_url, token, image_base_dir, seq_base)
-    StartMapConstruction(api_url, token, map_name, windowSize)
+    # post_to_server(api_url, token, image_base_dir, seq_base)
+    # StartMapConstruction(api_url, token, map_name, windowSize)
+    QueryLocal(api_url, token)
     ClearWorkspace(api_url, token, deleteAnchorImage)
     printTimestamp()
 
