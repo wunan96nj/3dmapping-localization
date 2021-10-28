@@ -148,8 +148,8 @@ def main():
     map_name = "pyFirstMap"
     windowSize = 0
     deleteAnchorImage = True
-    # post_to_server(api_url, token, image_base_dir, seq_base)
-    # StartMapConstruction(api_url, token, map_name, windowSize)
+    post_to_server(api_url, token, image_base_dir, seq_base)
+    StartMapConstruction(api_url, token, map_name, windowSize)
     QueryLocal(api_url, token)
     ClearWorkspace(api_url, token, deleteAnchorImage)
     printTimestamp()

@@ -30,18 +30,26 @@ sparse_dir = workspace_dir + 'sparse/'
 database_name = 'database.db'
 
 
+class Utils(Resource):
+    def write_to_file(content_s, file_full_path, is_base64, self):
+        if is_base64:
+            base64_bytes = content_s.encode('ascii')
+            file_bytes = base64.b64decode(base64_bytes)
+        else:
+            file_bytes = content_s.encode('ascii')
+        with open(file_full_path, 'wb') as f:
+            f.write(file_bytes)
+        return
+
+
 class CapturePhoto(Resource):
 
-    def save_files(json_data, png_file_full_path, json_file_full_path, self):
+    def save_files(json_data, image_file_full_path, json_file_full_path, self):
         b64 = json_data['b64']
         json_data['b64'] = "omitted"
-        png_base64_bytes = b64.encode('ascii')
-        png_bytes = base64.b64decode(png_base64_bytes)
-        with open(png_file_full_path, 'wb') as f:
-            f.write(png_bytes)
-        josn_base64_bytes = str(json_data).encode('ascii')
-        with open(json_file_full_path, 'wb') as f:
-            f.write(josn_base64_bytes)
+        Utils.write_to_file(b64, image_file_full_path, True, self)
+        Utils.write_to_file("omitted", json_file_full_path, False, self)
+        return
 
     def post(self):
         file_uuid = uuid.uuid4().hex;
@@ -76,7 +84,7 @@ class CapturePhoto(Resource):
             bank) + "/" + file_uuid + ".jpg"
         json_file_path = json_base_dir + str(
             bank) + "/" + file_uuid + ".json"
-        print("write png file to " + jpg_file_full_path)
+        print("write image file to " + jpg_file_full_path)
         print("write json file to " + json_file_path)
         CapturePhoto.save_files(json_data, jpg_file_full_path, json_file_path,
                                 self)
@@ -190,6 +198,7 @@ class QueryLocal(Resource):
         print("QueryLocal BEGIN")
         json_data = request.get_json(force=True)
         bank = json_data['bank']
+        b64 = json_data['b64']
         QueryLocal.query_local(bank, self)
         print("QueryLocal FIN")
         return
@@ -201,13 +210,22 @@ class QueryLocal(Resource):
     def query_local(bank, self):
         print("QueryLocal query_local() start .....")
         sparse_dir_bank = sparse_dir + str(bank) + "/"
-        db_path = sparse_dir_bank + database_name
-        print("QueryLocal query_local() db_path: " + db_path)
+        base_images_db_path = sparse_dir_bank + database_name
+        tmp_dir = sparse_dir_bank + "temp/"
+        if not os.path.exists(tmp_dir):
+            os.mkdir(tmp_dir)
+        file_uuid = uuid.uuid4().hex;
+        upload_image_full_path = tmp_dir + str(bank) + "/" + file_uuid + ".jpg"
+        print("write image file to " + upload_image_full_path)
+
+        print(
+            "QueryLocal query_local() base_images_db_path: " + base_images_db_path)
+        # read the feture of database of images dataware
         db_points_pos, db_points_rgb, db_points_des = get_point_pos_des.get_points_pos_des(
-            db_path)
+            base_images_db_path)
 
         # query database
-        query = database.COLMAPDatabase.connect(db_path)
+        query = database.COLMAPDatabase.connect("db_path")
         rows = query.execute("SELECT params FROM cameras")
         params = next(rows)
         params = database.blob_to_array(params[0], numpy.float64)
@@ -221,8 +239,6 @@ class QueryLocal(Resource):
             for image_id, data in query.execute(
                 "SELECT image_id, data FROM descriptors"))
         # localize every image in the query database
-        tvec = []
-        qvec = []
         for image_id in range(1, 2):
             print(image_id)
             fg_kp = query_kp[image_id]
@@ -238,8 +254,6 @@ class QueryLocal(Resource):
             points3D_coordinate = []
 
             for match in matches:
-                # print(fg1_kp[match.queryIdx][:2])
-                # print(db_points_pos[match.trainIdx])
                 points2D_coordinate.append(fg_kp[match.trainIdx][:2])
                 points3D_coordinate.append(db_points_pos[match.queryIdx])
             points2D_coordinate = numpy.asarray(points2D_coordinate)
