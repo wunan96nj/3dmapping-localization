@@ -6,6 +6,8 @@ import cv2
 import time
 import base64
 import shutil
+import json
+from json import JSONEncoder
 from flask import Flask, jsonify, request
 from flask_restful import reqparse, abort, Api, Resource
 import os
@@ -28,6 +30,13 @@ image_base_dir = workspace_dir + "images/"
 json_base_dir = workspace_dir + "json/"
 sparse_dir = workspace_dir + 'sparse/'
 database_name = 'database.db'
+
+
+class NDArrayEncoder(JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, numpy.ndarray):
+            return obj.tolist()
+        return JSONEncoder.default(self, obj)
 
 
 class Utils(Resource):
@@ -215,7 +224,7 @@ class QueryLocal(Resource):
                                                       upload_database_file_full_path,
                                                       self)
         print("QueryLocal (q, t):" + str((q, t)) + " FIN")
-        return str((q, t))
+        return json.dumps((q, t), cls=NDArrayEncoder)
 
     def correct_colmap_q(qvec):
         ret = numpy.roll(qvec, -1)

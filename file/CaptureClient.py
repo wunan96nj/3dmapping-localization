@@ -103,7 +103,7 @@ def StartMapConstruction(url, token, mapName, windowSize):
 def QueryLocal(url, token):
     print("QueryLocal...start...")
     complete_url = url + '/querylocal'
-    imagePath="/Users/akui/Desktop/images/0/0697a5c9fcef441ebebef261d54388d5.jpg"
+    imagePath = "/Users/akui/Desktop/images/0/0697a5c9fcef441ebebef261d54388d5.jpg"
     data = {
         "token": token,
         "bank": 0,
