@@ -199,37 +199,66 @@ class QueryLocal(Resource):
         json_data = request.get_json(force=True)
         bank = json_data['bank']
         b64 = json_data['b64']
-        QueryLocal.query_local(bank, self)
-        print("QueryLocal FIN")
-        return
+        sparse_dir_bank = sparse_dir + str(bank) + "/"
+        base_images_db_path = sparse_dir_bank + database_name
+        upload_image_tmp_dir = sparse_dir_bank + "upload_temp/"
+        file_uuid = uuid.uuid4().hex;
+        # the upload image file full path
+        upload_image_file_full_path = upload_image_tmp_dir + file_uuid + ".jpg"
+        # the upload image's feature database file full path
+        upload_database_file_full_path = upload_image_tmp_dir + file_uuid + ".db"
+        QueryLocal.save_image(b64, bank, upload_image_tmp_dir,
+                              upload_image_file_full_path, self)
+        QueryLocal.get_feature_upload(upload_image_tmp_dir,
+                                      upload_database_file_full_path, self)
+        (q, t) = QueryLocal.compare_upload_base_local(base_images_db_path,
+                                                      upload_database_file_full_path,
+                                                      self)
+        print("QueryLocal (q, t):" + str((q, t)) + " FIN")
+        return str((q, t))
 
     def correct_colmap_q(qvec):
         ret = numpy.roll(qvec, -1)
         return ret
 
-    def query_local(bank, self):
+    def save_image(b64, bank, upload_image_tmp_dir, upload_image_file_full_path,
+                   self):
+        print("QueryLocal save_image() start .....")
+        if not os.path.exists(upload_image_tmp_dir):
+            os.mkdir(upload_image_tmp_dir)
+        print("write image file to " + upload_image_file_full_path)
+        Utils.write_to_file(b64, upload_image_file_full_path, True, self)
+        return
+
+    def get_feature_upload(upload_image_tmp_dir, upload_database_file_full_path,
+                           self):
+        print("1. feature_extractor")
+        pIntrisics = subprocess.Popen(
+            [COLMAP, "feature_extractor", "--database_path",
+             upload_database_file_full_path, "--image_path",
+             upload_image_tmp_dir,
+             "--ImageReader.camera_model", "SIMPLE_PINHOLE"])
+        pIntrisics.wait()
+        return
+
+    def compare_upload_base_local(base_images_db_path,
+                                  upload_database_file_full_path,
+                                  self):
         print("QueryLocal query_local() start .....")
-        sparse_dir_bank = sparse_dir + str(bank) + "/"
-        base_images_db_path = sparse_dir_bank + database_name
-        tmp_dir = sparse_dir_bank + "temp/"
-        if not os.path.exists(tmp_dir):
-            os.mkdir(tmp_dir)
-        file_uuid = uuid.uuid4().hex;
-        upload_image_full_path = tmp_dir + str(bank) + "/" + file_uuid + ".jpg"
-        print("write image file to " + upload_image_full_path)
 
         print(
             "QueryLocal query_local() base_images_db_path: " + base_images_db_path)
+        print(
+            "QueryLocal query_local() upload_database_file_full_path: " + upload_database_file_full_path)
         # read the feture of database of images dataware
         db_points_pos, db_points_rgb, db_points_des = get_point_pos_des.get_points_pos_des(
             base_images_db_path)
 
-        # query database
-        query = database.COLMAPDatabase.connect("db_path")
+        # query uploaded image's database
+        query = database.COLMAPDatabase.connect(upload_database_file_full_path)
         rows = query.execute("SELECT params FROM cameras")
         params = next(rows)
         params = database.blob_to_array(params[0], numpy.float64)
-        print("QueryLocal query_local() db_points_pos: " + params)
         query_kp = dict(
             (image_id, database.blob_to_array(data, numpy.float32, (-1, 6)))
             for image_id, data in query.execute(
