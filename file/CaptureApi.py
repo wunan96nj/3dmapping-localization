@@ -214,10 +214,13 @@ class ClearWorkspace(Resource):
         bank = json_data['bank']
         image_dir = image_base_dir + str(bank) + "/"
         json_dir = json_base_dir + str(bank) + "/"
+        sparse_dir_bank = sparse_dir + str(bank) + "/"
         if os.path.exists(image_dir):
             shutil.rmtree(image_dir, ignore_errors=True)
         if os.path.exists(json_dir):
             shutil.rmtree(json_dir, ignore_errors=True)
+        if os.path.exists(sparse_dir_bank):
+            shutil.rmtree(sparse_dir_bank, ignore_errors=True)
         print("StartMapConstruction FIN")
 
 

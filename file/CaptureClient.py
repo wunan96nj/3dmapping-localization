@@ -33,21 +33,22 @@ def ConvertToBase64(src_filepath):
         return b64_encoded_img
 
 
-def post_to_server(api_url, token, image_base_dir, seq_base=0):
+def post_to_server(api_url, token, image_base_dir, seq_base, bank):
     for i, imagePath in enumerate(find_photos_filenames(image_base_dir)):
         seq = seq_base + i
         print("sequence: " + str(seq))
         print("imagePath: " + imagePath)
-        submit_image(api_url, token, imagePath, seq);
+        print("bank: " + str(bank))
+        submit_image(api_url, token, imagePath, seq, bank);
     return
 
 
-def submit_image(api_url, token, imagePath, seq):
+def submit_image(api_url, token, imagePath, seq, bank):
     print("submit_image...start...")
     complete_url = api_url + '/captureb64'
     data = {
         "token": token,
-        "bank": 0,  # default workspace/image bank
+        "bank": bank,  # default workspace/image bank
         "run": seq,
         # a running integer for the tracker session. Increment if tracking is lost or image is from a different session
         "index": seq,  # running index for images
@@ -80,12 +81,12 @@ def submit_image(api_url, token, imagePath, seq):
     return
 
 
-def StartMapConstruction(url, token, mapName, windowSize):
+def StartMapConstruction(url, token, mapName, windowSize, bank):
     print("StartMapConstruction...start...")
     complete_url = url + '/construct'
     data = {
         "token": token,
-        "bank": 0,
+        "bank": bank,
         "name": mapName,
         # If the images are shot in sequence like a video stream, this optional parameter can be used to limit
         # image matching to x previous and following frames.
@@ -101,14 +102,14 @@ def StartMapConstruction(url, token, mapName, windowSize):
 
 
 # opencv-python
-def QueryLocal(url, token, uploadImagePath):
+def QueryLocal(url, token, uploadImagePath, bank):
     t_beign = time.time()
     print("QueryLocal...start...t_beign:" + str(int(t_beign)))
     complete_url = url + '/querylocal'
 
     data = {
         "token": token,
-        "bank": 0,
+        "bank": bank,
         "b64": str(ConvertToBase64(uploadImagePath), 'utf-8')
     }
     json_data = json.dumps(data)
@@ -120,12 +121,12 @@ def QueryLocal(url, token, uploadImagePath):
     return
 
 
-def ClearWorkspace(url, token, deleteAnchorImage):
+def ClearWorkspace(url, token, deleteAnchorImage, bank):
     print("ClearWorkspace...start...")
     complete_url = url + '/clear'
     data = {
         "token": token,
-        "bank": 0,  # default workspace/image bank
+        "bank": bank,  # default workspace/image bank
         "anchor": deleteAnchorImage
     }
 
@@ -154,11 +155,12 @@ def main():
     map_name = "pyFirstMap"
     windowSize = 0
     deleteAnchorImage = True
-    post_to_server(api_url, token, image_base_dir, seq_base)
-    StartMapConstruction(api_url, token, map_name, windowSize)
+    bank = 0
+    ClearWorkspace(api_url, token, deleteAnchorImage, bank)
+    post_to_server(api_url, token, image_base_dir, seq_base, bank)
+    StartMapConstruction(api_url, token, map_name, windowSize, bank)
     uploadImagePath = "/Users/akui/Desktop/south-building/images/P1180347.png"
-    QueryLocal(api_url, token, uploadImagePath)
-    ClearWorkspace(api_url, token, deleteAnchorImage)
+    QueryLocal(api_url, token, uploadImagePath, bank)
     printTimestamp()
 
 
