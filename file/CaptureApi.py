@@ -25,7 +25,7 @@ parser = reqparse.RequestParser()
 parser.add_argument('task', type=str)
 
 COLMAP = "/Users/akui/eclipse-workspace/py-colmap-rest-gate/file/COLMAP.app/Contents/MacOS/colmap"
-workspace_dir = "/Users/akui/Desktop/"
+workspace_dir = "/Users/akui/Desktop" + "/"
 image_base_dir = workspace_dir + "images/"
 json_base_dir = workspace_dir + "json/"
 sparse_dir = workspace_dir + 'sparse/'
@@ -85,6 +85,10 @@ class CapturePhoto(Resource):
         ox = json_data['ox']
         oy = json_data['oy']
         b64 = json_data['b64']
+        if not os.path.exists(image_base_dir):
+            os.mkdir(image_base_dir)
+        if not os.path.exists(json_base_dir):
+            os.mkdir(json_base_dir)
         if not os.path.exists(image_base_dir + str(bank)):
             os.mkdir(image_base_dir + str(bank))
         if not os.path.exists(json_base_dir + str(bank)):
