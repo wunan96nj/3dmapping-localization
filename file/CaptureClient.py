@@ -1,5 +1,6 @@
 import requests
 import json
+import time
 import base64
 import os
 from PIL import Image
@@ -100,19 +101,22 @@ def StartMapConstruction(url, token, mapName, windowSize):
 
 
 # opencv-python
-def QueryLocal(url, token):
-    print("QueryLocal...start...")
+def QueryLocal(url, token, uploadImagePath):
+    t_beign = time.time()
+    print("QueryLocal...start...t_beign:" + str(int(t_beign)))
     complete_url = url + '/querylocal'
-    imagePath = "/Users/akui/Desktop/images/0/0697a5c9fcef441ebebef261d54388d5.jpg"
+
     data = {
         "token": token,
         "bank": 0,
-        "b64": str(ConvertToBase64(imagePath), 'utf-8')
+        "b64": str(ConvertToBase64(uploadImagePath), 'utf-8')
     }
     json_data = json.dumps(data)
     r = requests.post(complete_url, data=json_data)
     print(r.text)
-    print("QueryLocal...end...")
+    t_end = time.time()
+    print("QueryLocal...end...t_end:" + str(int(t_end)))
+    print("total seconds:" + str(int(t_end) - int(t_beign)))
     return
 
 
@@ -150,9 +154,10 @@ def main():
     map_name = "pyFirstMap"
     windowSize = 0
     deleteAnchorImage = True
-    # post_to_server(api_url, token, image_base_dir, seq_base)
-    # StartMapConstruction(api_url, token, map_name, windowSize)
-    QueryLocal(api_url, token)
+    post_to_server(api_url, token, image_base_dir, seq_base)
+    StartMapConstruction(api_url, token, map_name, windowSize)
+    uploadImagePath = "/Users/akui/Desktop/south-building/images/P1180347.png"
+    QueryLocal(api_url, token, uploadImagePath)
     ClearWorkspace(api_url, token, deleteAnchorImage)
     printTimestamp()
 

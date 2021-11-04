@@ -4,6 +4,7 @@ import uuid
 import numpy
 import cv2
 import time
+import datetime
 import base64
 import shutil
 import json
@@ -206,9 +207,23 @@ class StartMapConstruction(Resource):
         return
 
 
+class ClearWorkspace(Resource):
+    def post(self):
+        print("ClearWorkspace BEGIN, ")
+        json_data = request.get_json(force=True)
+        bank = json_data['bank']
+        image_dir = image_base_dir + str(bank) + "/"
+        json_dir = json_base_dir + str(bank) + "/"
+        if os.path.exists(image_dir):
+            shutil.rmtree(image_dir, ignore_errors=True)
+        if os.path.exists(json_dir):
+            shutil.rmtree(json_dir, ignore_errors=True)
+        print("StartMapConstruction FIN")
+
+
 class QueryLocal(Resource):
     def post(self):
-        print("QueryLocal BEGIN")
+        print("QueryLocal BEGIN, ")
         json_data = request.get_json(force=True)
         bank = json_data['bank']
         b64 = json_data['b64']
@@ -333,6 +348,7 @@ class QueryLocal(Resource):
 # http://localhost:5444/capture-photo
 api.add_resource(CapturePhoto, '/capture-photo/captureb64')
 api.add_resource(StartMapConstruction, '/capture-photo/construct')
+api.add_resource(ClearWorkspace, '/capture-photo/clear')
 api.add_resource(QueryLocal, '/capture-photo/querylocal')
 
 if __name__ == '__main__':
