@@ -62,7 +62,7 @@ class CapturePhoto(Resource):
         return
 
     def post(self):
-        file_uuid = uuid.uuid4().hex;
+        # file_uuid = uuid.uuid4().hex;
         json_data = request.get_json(force=True)
         token = json_data['token']
         bank = json_data['bank']
@@ -85,6 +85,8 @@ class CapturePhoto(Resource):
         fy = json_data['fy']
         ox = json_data['ox']
         oy = json_data['oy']
+        image_name = json_data['image_name']
+        image_name = image_name.split('.')[0]
         b64 = json_data['b64']
         if not os.path.exists(image_base_dir):
             os.mkdir(image_base_dir)
@@ -95,15 +97,15 @@ class CapturePhoto(Resource):
         if not os.path.exists(json_base_dir + str(bank)):
             os.mkdir(json_base_dir + str(bank))
         jpg_file_full_path = image_base_dir + str(
-            bank) + "/" + file_uuid + ".jpg"
+            bank) + "/" + image_name + ".jpg"
         json_file_path = json_base_dir + str(
-            bank) + "/" + file_uuid + ".json"
+            bank) + "/" + image_name + ".json"
         print("write image file to " + jpg_file_full_path)
         print("write json file to " + json_file_path)
         CapturePhoto.save_files(json_data, jpg_file_full_path, json_file_path,
                                 self)
-        return jsonify(file_uuid=file_uuid,
-                       png_file_full_path=jpg_file_full_path,
+        return jsonify(image_name=image_name,
+                       jpg_file_full_path=jpg_file_full_path,
                        json_file_path=json_file_path)
 
 
@@ -230,23 +232,34 @@ class QueryLocal(Resource):
         json_data = request.get_json(force=True)
         bank = json_data['bank']
         b64 = json_data['b64']
+        image_name = json_data['image_name']
+        image_name = image_name.split('.')[0]
+        print("QueryLocal image_name: " + image_name)
         sparse_dir_bank = sparse_dir + str(bank) + "/"
         base_images_db_path = sparse_dir_bank + database_name
         upload_image_tmp_dir = sparse_dir_bank + "upload_temp/"
-        file_uuid = uuid.uuid4().hex;
         # the upload image file full path
-        upload_image_file_full_path = upload_image_tmp_dir + file_uuid + ".jpg"
+        upload_image_file_full_path = upload_image_tmp_dir + image_name + ".jpg"
         # the upload image's feature database file full path
-        upload_database_file_full_path = upload_image_tmp_dir + file_uuid + ".db"
+        upload_database_file_full_path = upload_image_tmp_dir + image_name + ".db"
+
+        print(
+            "QueryLocal upload_image_file_full_path: " + upload_image_file_full_path)
+        print(
+            "QueryLocal upload_database_file_full_path: " + upload_database_file_full_path)
+
         QueryLocal.save_image(b64, bank, upload_image_tmp_dir,
                               upload_image_file_full_path, self)
         QueryLocal.get_feature_upload(upload_image_tmp_dir,
                                       upload_database_file_full_path, self)
-        (q, t) = QueryLocal.compare_upload_base_local(base_images_db_path,
-                                                      upload_database_file_full_path,
-                                                      self)
-        print("QueryLocal (q, t):" + str((q, t)) + " FIN")
-        return json.dumps((q, t), cls=NDArrayEncoder)
+        (image_name_jpg, t) = QueryLocal.compare_upload_base_local(
+            base_images_db_path,
+            upload_database_file_full_path,
+            image_name + ".jpg",
+            self)
+        print("QueryLocal (image_name_jpg, t):" + str(
+            (image_name_jpg, t)) + " FIN")
+        return json.dumps((image_name_jpg, t), cls=NDArrayEncoder)
 
     def correct_colmap_q(qvec):
         ret = numpy.roll(qvec, -1)
@@ -263,6 +276,11 @@ class QueryLocal(Resource):
 
     def get_feature_upload(upload_image_tmp_dir, upload_database_file_full_path,
                            self):
+        print("QueryLocal get_feature_upload() start .....")
+        print(
+            "QueryLocal get_feature_upload() upload_image_tmp_dir: " + upload_image_tmp_dir)
+        print(
+            "QueryLocal get_feature_upload() upload_database_file_full_path: " + upload_database_file_full_path)
         print("1. feature_extractor")
         pIntrisics = subprocess.Popen(
             [COLMAP, "feature_extractor", "--database_path",
@@ -274,6 +292,7 @@ class QueryLocal(Resource):
 
     def compare_upload_base_local(base_images_db_path,
                                   upload_database_file_full_path,
+                                  image_name_jpg,
                                   self):
         print("QueryLocal query_local() start .....")
 
@@ -281,6 +300,9 @@ class QueryLocal(Resource):
             "QueryLocal query_local() base_images_db_path: " + base_images_db_path)
         print(
             "QueryLocal query_local() upload_database_file_full_path: " + upload_database_file_full_path)
+        print(
+            "QueryLocal query_local() image_name_jpg: " + image_name_jpg)
+
         # read the feture of database of images dataware
         db_points_pos, db_points_rgb, db_points_des = get_point_pos_des.get_points_pos_des(
             base_images_db_path)
@@ -336,10 +358,11 @@ class QueryLocal(Resource):
             t = result[2].flatten()
             q = R.from_rotvec(result[1].flatten()).as_quat()
             print(result[0])
-            print(q, t)
+            print("QueryLocal query_local() t: " + str(t))
             q = QueryLocal.correct_colmap_q(q)
+            print("QueryLocal query_local() q: " + str(q))
             print("QueryLocal query_local() end .....")
-            return (q, t)
+            return (image_name_jpg, t)
 
     ##
 

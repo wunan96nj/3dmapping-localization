@@ -5,6 +5,7 @@ import base64
 import os
 from PIL import Image
 from datetime import datetime
+import read_model
 
 
 def find_photos_filenames(full_dir_path, isPng=False):
@@ -46,6 +47,8 @@ def post_to_server(api_url, token, image_base_dir, seq_base, bank):
 def submit_image(api_url, token, imagePath, seq, bank):
     print("submit_image...start...")
     complete_url = api_url + '/captureb64'
+    (image_dir, image_name) = os.path.split(imagePath)
+    image_name = image_name.split('.')[0] + ".jpg"
     data = {
         "token": token,
         "bank": bank,  # default workspace/image bank
@@ -69,8 +72,9 @@ def submit_image(api_url, token, imagePath, seq, bank):
         "fy": 2457.5,  # image focal length in pixels on y axis
         "ox": 1152,  # image principal point on x axis
         "oy": 1536,  # image principal point on y axis
-        "b64": str(ConvertToBase64(imagePath), 'utf-8')
-        # base64 encoded .png image
+        "b64": str(ConvertToBase64(imagePath), 'utf-8'),
+        "image_name": image_name
+        # base64 encoded .jpg image
     }
 
     json_data = json.dumps(data)
@@ -104,13 +108,16 @@ def StartMapConstruction(url, token, mapName, windowSize, bank):
 # opencv-python
 def QueryLocal(url, token, uploadImagePath, bank):
     t_beign = time.time()
-    print("QueryLocal...start...t_beign:" + str(int(t_beign)))
+    print("QueryLocal...start...t_beign: " + str(int(t_beign)))
+    print("QueryLocal...uploadImagePath: " + str(uploadImagePath))
     complete_url = url + '/querylocal'
-
+    (image_dir, image_name) = os.path.split(uploadImagePath)
+    image_name = image_name.split('.')[0] + ".jpg"
     data = {
         "token": token,
         "bank": bank,
-        "b64": str(ConvertToBase64(uploadImagePath), 'utf-8')
+        "b64": str(ConvertToBase64(uploadImagePath), 'utf-8'),
+        "image_name": image_name
     }
     json_data = json.dumps(data)
     r = requests.post(complete_url, data=json_data)
@@ -145,7 +152,16 @@ def printTimestamp():
     return
 
 
-def main():
+def printImageBinInfo():
+    print("printImageBinInfo ... start ...")
+    image_bin_path = "/Users/akui/Desktop/sparse/0/images.bin"
+    images = read_model.read_images_binary(image_bin_path)
+    print(images)
+    print("printImageBinInfo ... end ...")
+    return
+
+
+def main_test():
     printTimestamp()
     # api_url = "https://api.immersal.com"
     api_url = "http://localhost:5444/capture-photo"
@@ -156,12 +172,20 @@ def main():
     windowSize = 0
     deleteAnchorImage = True
     bank = 0
-    ClearWorkspace(api_url, token, deleteAnchorImage, bank)
-    post_to_server(api_url, token, image_base_dir, seq_base, bank)
-    StartMapConstruction(api_url, token, map_name, windowSize, bank)
+    # ClearWorkspace(api_url, token, deleteAnchorImage, bank)
+    # post_to_server(api_url, token, image_base_dir, seq_base, bank)
+    # StartMapConstruction(api_url, token, map_name, windowSize, bank)
+
     uploadImagePath = "/Users/akui/Desktop/south-building/images/P1180347.png"
     QueryLocal(api_url, token, uploadImagePath, bank)
+    printImageBinInfo()
     printTimestamp()
+    return
+
+
+def main():
+    main_test()
+    return
 
 
 if __name__ == "__main__":
