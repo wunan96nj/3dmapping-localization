@@ -12,6 +12,7 @@ def find_photos_filenames(full_dir_path, isPng=False):
     for root, ds, fs in os.walk(full_dir_path):
         for f in fs:
             fullname = os.path.join(root, f)
+            # need png file, jpg convert to png
             if isPng:
                 if f.lower().endswith('.png'):
                     yield fullname
@@ -24,7 +25,9 @@ def find_photos_filenames(full_dir_path, isPng=False):
                     print("convert jpg 2 png...end...")
                     yield png_full_name
             else:
-                yield fullname
+                #only need jpg now
+                if f.lower().endswith('.jpg'):
+                    yield fullname
 
 
 def ConvertToBase64(src_filepath):
@@ -172,9 +175,9 @@ def main_test():
     windowSize = 0
     deleteAnchorImage = True
     bank = 0
-    # ClearWorkspace(api_url, token, deleteAnchorImage, bank)
-    # post_to_server(api_url, token, image_base_dir, seq_base, bank)
-    # StartMapConstruction(api_url, token, map_name, windowSize, bank)
+    ClearWorkspace(api_url, token, deleteAnchorImage, bank)
+    post_to_server(api_url, token, image_base_dir, seq_base, bank)
+    StartMapConstruction(api_url, token, map_name, windowSize, bank)
 
     uploadImagePath = "/Users/akui/Desktop/south-building/images/P1180347.png"
     QueryLocal(api_url, token, uploadImagePath, bank)
