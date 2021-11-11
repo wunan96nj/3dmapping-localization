@@ -175,11 +175,11 @@ def main_test():
     windowSize = 0
     deleteAnchorImage = True
     bank = 0
-    ClearWorkspace(api_url, token, deleteAnchorImage, bank)
-    post_to_server(api_url, token, image_base_dir, seq_base, bank)
-    StartMapConstruction(api_url, token, map_name, windowSize, bank)
+    # ClearWorkspace(api_url, token, deleteAnchorImage, bank)
+    # post_to_server(api_url, token, image_base_dir, seq_base, bank)
+    # StartMapConstruction(api_url, token, map_name, windowSize, bank)
 
-    uploadImagePath = "/Users/akui/Desktop/south-building/images/P1180347.jpg"
+    uploadImagePath = "/Users/akui/Desktop/south-building/images/P1180346.jpg"
     QueryLocal(api_url, token, uploadImagePath, bank)
     printImageBinInfo()
     printTimestamp()
