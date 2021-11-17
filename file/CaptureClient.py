@@ -25,7 +25,7 @@ def find_photos_filenames(full_dir_path, isPng=False):
                     print("convert jpg 2 png...end...")
                     yield png_full_name
             else:
-                #only need jpg now
+                # only need jpg now
                 if f.lower().endswith('.jpg'):
                     yield fullname
 
@@ -175,11 +175,11 @@ def main_test():
     windowSize = 0
     deleteAnchorImage = True
     bank = 0
-    # ClearWorkspace(api_url, token, deleteAnchorImage, bank)
-    # post_to_server(api_url, token, image_base_dir, seq_base, bank)
-    # StartMapConstruction(api_url, token, map_name, windowSize, bank)
-
-    uploadImagePath = "/Users/akui/Desktop/south-building/images/P1180346.jpg"
+    ClearWorkspace(api_url, token, deleteAnchorImage, bank)
+    post_to_server(api_url, token, image_base_dir, seq_base, bank)
+    StartMapConstruction(api_url, token, map_name, windowSize, bank)
+    print("StartMapConstruction---------------FIN")
+    uploadImagePath = "/Users/akui/Desktop/south-building/images/P1180141.jpg"
     QueryLocal(api_url, token, uploadImagePath, bank)
     printImageBinInfo()
     printTimestamp()
