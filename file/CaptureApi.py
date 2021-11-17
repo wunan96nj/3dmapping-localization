@@ -252,14 +252,14 @@ class QueryLocal(Resource):
                               upload_image_file_full_path, self)
         QueryLocal.get_feature_upload(upload_image_tmp_dir,
                                       upload_database_file_full_path, self)
-        (image_name_jpg, t, q) = QueryLocal.compare_upload_base_local(
+        (image_name_jpg, q, t) = QueryLocal.compare_upload_base_local(
             base_images_db_path,
             upload_database_file_full_path,
             image_name + ".jpg",
             self)
-        print("QueryLocal (image_name_jpg, t, q):" + str(
-            (image_name_jpg, t, q)) + " FIN")
-        return json.dumps((image_name_jpg, t, q), cls=NDArrayEncoder)
+        print("QueryLocal (image_name_jpg, q, t):" + str(
+            (image_name_jpg, q, t)) + " FIN")
+        return json.dumps((image_name_jpg, q, t), cls=NDArrayEncoder)
 
     def correct_colmap_q(qvec):
         ret = numpy.roll(qvec, -1)
@@ -362,7 +362,7 @@ class QueryLocal(Resource):
             q = QueryLocal.correct_colmap_q(q)
             print("QueryLocal query_local() q: " + str(q))
             print("QueryLocal query_local() end .....")
-            return (image_name_jpg, t, q)
+            return (image_name_jpg, q, t)
 
     ##
 
