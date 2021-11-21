@@ -20,7 +20,7 @@ def feature_cv(database_path, img_folder, ):
         camera_id = db.add_camera(model, width, height, params)
         image_id = db.add_image(img_name, camera_id)
         img = cv2.imread(img_path, 0)
-        sift = cv2.SIFT_create(13000)
+        sift = cv2.SIFT_create(10000)
         fg_kp, fg_des = sift.detectAndCompute(img, None)
         fg_kp = np.array([fg_kp[i].pt for i in range(len(fg_kp))])
         fg_des = np.array(fg_des).astype(np.uint8)

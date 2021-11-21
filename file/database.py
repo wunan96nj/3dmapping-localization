@@ -228,8 +228,8 @@ class COLMAPDatabase(sqlite3.Connection):
         self.execute(
             "INSERT INTO two_view_geometries VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             (pair_id,) + matches.shape + (array_to_blob(matches), config,
-             array_to_blob(F), array_to_blob(E), array_to_blob(H),
-             array_to_blob(qvec), array_to_blob(tvec)))
+                                          array_to_blob(F), array_to_blob(E), array_to_blob(H),
+                                          array_to_blob(qvec), array_to_blob(tvec)))
 
 
 def example_usage():

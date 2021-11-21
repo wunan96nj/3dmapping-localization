@@ -112,7 +112,7 @@ class CapturePhoto(Resource):
 
 class StartMapConstruction(Resource):
 
-    def build(bank, self):
+    def build(feature_dim, bank, self):
         print("StartMapConstruction build() start.....")
         image_dir = image_base_dir + str(bank) + "/"
         sparse_dir_bank = sparse_dir + str(bank) + "/"
@@ -153,7 +153,7 @@ class StartMapConstruction(Resource):
         print("StartMapConstruction build() end .....")
         return
 
-    def gen_newdb(bank, self):
+    def gen_newdb(feature_dim, bank, self):
         print("StartMapConstruction gen_newdb() start .....")
         sparse_dir_bank = sparse_dir + str(bank) + "/"
         tmp_database_dir = sparse_dir_bank + "/temp/"
@@ -164,7 +164,7 @@ class StartMapConstruction(Resource):
         print(cameras)
         print("2. write_to_nw_db.read_database")
         db_images, kp_table, des_table = write_to_nw_db.read_database(
-            tmp_database_dir)
+            tmp_database_dir, feature_dim)
 
         print("3. write_to_nw_db.get_points_pos_des")
         points_pos, points_des, points_rgb = write_to_nw_db.get_points_pos_des(
@@ -186,7 +186,7 @@ class StartMapConstruction(Resource):
         print("StartMapConstruction gen_newdb() end .....")
         return
 
-    def remove_useless_files(bank, self):
+    def remove_useless_files(feature_dim, bank, self):
         print("StartMapConstruction remove_useless_files() start .....")
         sparse_dir_bank = sparse_dir + str(bank) + "/"
         tmp_database_dir = sparse_dir_bank + "temp/"
@@ -204,9 +204,10 @@ class StartMapConstruction(Resource):
         print("StartMapConstruction BEGIN")
         json_data = request.get_json(force=True)
         bank = json_data['bank']
-        StartMapConstruction.build(bank, self)
-        StartMapConstruction.gen_newdb(bank, self)
-        StartMapConstruction.remove_useless_files(bank, self)
+        feature_dim = json_data['feature_dim']
+        StartMapConstruction.build(feature_dim, bank, self)
+        StartMapConstruction.gen_newdb(feature_dim, bank, self)
+        StartMapConstruction.remove_useless_files(feature_dim, bank, self)
         print("StartMapConstruction FIN")
         return
 
@@ -234,6 +235,7 @@ class QueryLocal(Resource):
         json_data = request.get_json(force=True)
         bank = json_data['bank']
         b64 = json_data['b64']
+        feature_dim = json_data['feature_dim']
         image_name = json_data['image_name']
         image_name = image_name.split('.')[0]
         print("QueryLocal image_name: " + image_name)
@@ -251,13 +253,14 @@ class QueryLocal(Resource):
             "QueryLocal upload_database_file_full_path: " + upload_database_file_full_path)
 
         QueryLocal.save_image(b64, bank, upload_image_tmp_dir,
-                              upload_image_file_full_path, self)
+                              upload_image_file_full_path, feature_dim, self)
         QueryLocal.get_feature_upload(upload_image_tmp_dir,
-                                      upload_database_file_full_path, self)
+                                      upload_database_file_full_path,
+                                      feature_dim, self)
         (image_name_jpg, q, t) = QueryLocal.compare_upload_base_local(
             base_images_db_path,
             upload_database_file_full_path,
-            image_name + ".jpg",
+            image_name + ".jpg", feature_dim,
             self)
         print("QueryLocal (image_name_jpg, q, t):" + str(
             (image_name_jpg, q, t)) + " FIN")
@@ -268,6 +271,7 @@ class QueryLocal(Resource):
         return ret
 
     def save_image(b64, bank, upload_image_tmp_dir, upload_image_file_full_path,
+                   feature_dim,
                    self):
         print("QueryLocal save_image() start .....")
         if not os.path.exists(upload_image_tmp_dir):
@@ -277,6 +281,7 @@ class QueryLocal(Resource):
         return
 
     def get_feature_upload(upload_image_tmp_dir, upload_database_file_full_path,
+                           feature_dim,
                            self):
         print("QueryLocal get_feature_upload() start .....")
         print(
@@ -294,7 +299,7 @@ class QueryLocal(Resource):
 
     def compare_upload_base_local(base_images_db_path,
                                   upload_database_file_full_path,
-                                  image_name_jpg,
+                                  image_name_jpg, feature_dim,
                                   self):
         print("QueryLocal query_local() start .....")
 
@@ -304,7 +309,7 @@ class QueryLocal(Resource):
             "QueryLocal query_local() upload_database_file_full_path: " + upload_database_file_full_path)
         print(
             "QueryLocal query_local() image_name_jpg: " + image_name_jpg)
-
+        shape = (-1, feature_dim)
         # read the feture of database of images dataware
         db_points_pos, db_points_rgb, db_points_des = get_point_pos_des.get_points_pos_des(
             base_images_db_path)
@@ -315,11 +320,13 @@ class QueryLocal(Resource):
         params = next(rows)
         params = database.blob_to_array(params[0], numpy.float64)
         query_kp = dict(
-            (image_id, database.blob_to_array(data, numpy.float32, (-1, 6)))
+            (image_id,
+             database.blob_to_array(data, numpy.float32, (-1, 6)))
             for image_id, data in query.execute(
                 "SELECT image_id, data FROM keypoints"))
         query_des = dict(
-            (image_id, database.blob_to_array(data, numpy.uint8, (-1, 128)))
+            (image_id,
+             database.blob_to_array(data, numpy.uint8, (-1, 128)))
             for image_id, data in query.execute(
                 "SELECT image_id, data FROM descriptors"))
         # localize every image in the query database

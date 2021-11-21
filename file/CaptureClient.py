@@ -88,13 +88,14 @@ def submit_image(api_url, token, imagePath, seq, bank):
     return
 
 
-def StartMapConstruction(url, token, mapName, windowSize, bank):
+def StartMapConstruction(url, token, mapName, windowSize, feature_dim, bank):
     print("StartMapConstruction...start...")
     complete_url = url + '/construct'
     data = {
         "token": token,
         "bank": bank,
         "name": mapName,
+        "feature_dim": feature_dim,
         # If the images are shot in sequence like a video stream, this optional parameter can be used to limit
         # image matching to x previous and following frames.
         # This can decrease map construction times and help constructing maps in repetitive environments.
@@ -109,7 +110,7 @@ def StartMapConstruction(url, token, mapName, windowSize, bank):
 
 
 # opencv-python
-def QueryLocal(url, token, uploadImagePath, bank):
+def QueryLocal(url, token, uploadImagePath, bank, feature_dim):
     t_beign = time.time()
     print("QueryLocal...start...t_beign: " + str(int(t_beign)))
     print("QueryLocal...uploadImagePath: " + str(uploadImagePath))
@@ -119,6 +120,7 @@ def QueryLocal(url, token, uploadImagePath, bank):
     data = {
         "token": token,
         "bank": bank,
+        "feature_dim": feature_dim,
         "b64": str(ConvertToBase64(uploadImagePath), 'utf-8'),
         "image_name": image_name
     }
@@ -175,12 +177,15 @@ def main_test():
     windowSize = 0
     deleteAnchorImage = True
     bank = 0
+    # feature_dim: colmap use 6, cv use 2
+    feature_dim = 2
     ClearWorkspace(api_url, token, deleteAnchorImage, bank)
     post_to_server(api_url, token, image_base_dir, seq_base, bank)
-    StartMapConstruction(api_url, token, map_name, windowSize, bank)
-    # print("StartMapConstruction---------------FIN")
-    # uploadImagePath = "/Users/akui/Desktop/south-building/images/P1180141.jpg"
-    # QueryLocal(api_url, token, uploadImagePath, bank)
+    StartMapConstruction(api_url, token, map_name, windowSize, feature_dim,
+                         bank)
+    print("StartMapConstruction---------------FIN")
+    uploadImagePath = "/Users/akui/Desktop/south-building/images/P1180141.jpg"
+    QueryLocal(api_url, token, uploadImagePath, bank, feature_dim)
     printImageBinInfo()
     printTimestamp()
     return
