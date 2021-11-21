@@ -178,9 +178,9 @@ def main_test():
     ClearWorkspace(api_url, token, deleteAnchorImage, bank)
     post_to_server(api_url, token, image_base_dir, seq_base, bank)
     StartMapConstruction(api_url, token, map_name, windowSize, bank)
-    print("StartMapConstruction---------------FIN")
-    uploadImagePath = "/Users/akui/Desktop/south-building/images/P1180141.jpg"
-    QueryLocal(api_url, token, uploadImagePath, bank)
+    # print("StartMapConstruction---------------FIN")
+    # uploadImagePath = "/Users/akui/Desktop/south-building/images/P1180141.jpg"
+    # QueryLocal(api_url, token, uploadImagePath, bank)
     printImageBinInfo()
     printTimestamp()
     return

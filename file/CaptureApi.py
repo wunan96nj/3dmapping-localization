@@ -5,6 +5,7 @@ import numpy
 import cv2
 import time
 import datetime
+import cv_feature
 import base64
 import shutil
 import json
@@ -127,12 +128,13 @@ class StartMapConstruction(Resource):
         if not os.path.exists(tmp_database_dir):
             os.mkdir(tmp_database_dir)
 
-        print("1. feature_extractor")
-        pIntrisics = subprocess.Popen(
-            [COLMAP, "feature_extractor", "--database_path",
-             tmp_database_dir + database_name, "--image_path", image_dir,
-             "--ImageReader.camera_model", "SIMPLE_PINHOLE"])
-        pIntrisics.wait()
+        # print("1. feature_extractor")
+        # pIntrisics = subprocess.Popen(
+        #     [COLMAP, "feature_extractor", "--database_path",
+        #      tmp_database_dir + database_name, "--image_path", image_dir,
+        #      "--ImageReader.camera_model", "SIMPLE_PINHOLE"])
+        # pIntrisics.wait()
+        cv_feature.feature_cv(tmp_database_dir + database_name, image_dir)
 
         print("2. Matching")
         pIntrisics = subprocess.Popen(
@@ -262,7 +264,7 @@ class QueryLocal(Resource):
         return json.dumps((image_name_jpg, q, t), cls=NDArrayEncoder)
 
     def correct_colmap_q(qvec):
-        ret = numpy.roll(qvec, -1)
+        ret = numpy.roll(qvec, 1)
         return ret
 
     def save_image(b64, bank, upload_image_tmp_dir, upload_image_file_full_path,
