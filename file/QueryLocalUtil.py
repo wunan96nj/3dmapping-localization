@@ -22,7 +22,6 @@ import Utils
 
 
 def save_image(b64, bank, upload_image_tmp_dir, upload_image_file_full_path,
-               feature_dim,
                self):
     print("QueryLocal save_image() start .....")
     if not os.path.exists(upload_image_tmp_dir):
@@ -45,6 +44,7 @@ def get_feature_upload(COLMAP, database_name, upload_image_tmp_dir,
     return
 
 
+# db of upload image, db of total image bank
 def compare_upload_base_local(base_images_db_path,
                               upload_database_file_full_path,
                               image_name_jpg,
@@ -60,6 +60,35 @@ def compare_upload_base_local(base_images_db_path,
     db_points_pos, db_points_rgb, db_points_des = get_point_pos_des.get_points_pos_des(
         base_images_db_path)
 
+    (query_kp, query_des, params) = get_upload_image_dbinfo(
+        upload_database_file_full_path)
+
+    # localize every image in the query database
+    for image_id in range(1, 2):
+        print(image_id)
+        fg_kp = query_kp[image_id]
+        fg_des = query_des[image_id]
+        (image_name_jpg, q, t) = match_by_fg_kp_fg_des(fg_kp, fg_des,
+                                                       db_points_des,
+                                                       db_points_pos, params,
+                                                       image_name_jpg)
+        return (image_name_jpg, q, t)
+
+
+# cv feature, db of total image bank
+def compare_upload_base_local_cv(base_images_db_path, image_name_jpg, fg_kp,
+                                 fg_des, params, self):
+    db_points_pos, db_points_rgb, db_points_des = get_point_pos_des.get_points_pos_des(
+        base_images_db_path)
+    for image_id in range(1, 2):
+        (image_name_jpg, q, t) = match_by_fg_kp_fg_des(fg_kp, fg_des,
+                                                       db_points_des,
+                                                       db_points_pos, params,
+                                                       image_name_jpg)
+        return (image_name_jpg, q, t)
+
+
+def get_upload_image_dbinfo(upload_database_file_full_path):
     # query uploaded image's database
     query = database.COLMAPDatabase.connect(upload_database_file_full_path)
     rows = query.execute("SELECT params FROM cameras")
@@ -75,46 +104,65 @@ def compare_upload_base_local(base_images_db_path,
          database.blob_to_array(data, numpy.uint8, (-1, 128)))
         for image_id, data in query.execute(
             "SELECT image_id, data FROM descriptors"))
-    # localize every image in the query database
-    for image_id in range(1, 2):
-        print(image_id)
-        fg_kp = query_kp[image_id]
-        fg_des = query_des[image_id]
-        # print(fg_kp.shape)
-        # print(fg_des.shape)
-        match_start = time.time()
-        bf = cv2.BFMatcher(cv2.NORM_L1, crossCheck=True)
-        matches = bf.match(db_points_des, fg_des)
-        matches = sorted(matches, key=lambda x: x.distance)
-        print("time used for knnMatching:", time.time() - match_start)
-        points2D_coordinate = []
-        points3D_coordinate = []
+    return (query_kp, query_des, params)
 
-        for match in matches:
-            points2D_coordinate.append(fg_kp[match.trainIdx][:2])
-            points3D_coordinate.append(db_points_pos[match.queryIdx])
-        points2D_coordinate = numpy.asarray(points2D_coordinate)
-        points3D_coordinate = numpy.asarray(points3D_coordinate)
-        # localization with pycolmap absolute_pose_estimation
-        localize_start = time.time()
-        focal_length, principal_x, principal_y = params[0], params[1], \
-                                                 params[2]
-        # Intrinsic Matrix
-        camera_K = numpy.array([[focal_length, 0, principal_x],
-                                [0, focal_length, principal_y],
-                                [0, 0, 1]], dtype=numpy.double)
-        dist_coeffs = numpy.zeros((4, 1))
 
-        result = cv2.solvePnPRansac(points3D_coordinate,
-                                    points2D_coordinate, camera_K,
-                                    dist_coeffs, flags=cv2.SOLVEPNP_P3P,
-                                    iterationsCount=1000)
+def match_by_fg_kp_fg_des(fg_kp, fg_des, db_points_des, db_points_pos, params,
+                          image_name_jpg):
+    print("match_by_fg_kp_fg_des fg_kp: %s" % str(fg_kp))
+    print("match_by_fg_kp_fg_des fg_des: %s" % str(fg_des))
+    print("match_by_fg_kp_fg_des db_points_des: %s" % str(db_points_des))
+    print("match_by_fg_kp_fg_des db_points_pos: %s" % str(db_points_pos))
+    print("match_by_fg_kp_fg_des params: %s" % str(params))
+    print("match_by_fg_kp_fg_des image_name_jpg: %s" % str(image_name_jpg))
+    match_start = time.time()
+    bf = cv2.BFMatcher(cv2.NORM_L1, crossCheck=True)
+    matches = bf.match(db_points_des, fg_des)
+    matches = sorted(matches, key=lambda x: x.distance)
+    print("time used for knnMatching:", time.time() - match_start)
+    points2D_coordinate = []
+    points3D_coordinate = []
 
-        t = result[2].flatten()
-        q = R.from_rotvec(result[1].flatten()).as_quat()
-        print(result[0])
-        print("QueryLocal query_local() t: " + str(t))
-        q = Utils.correct_colmap_q(q)
-        print("QueryLocal query_local() q: " + str(q))
-        print("QueryLocal query_local() end .....")
-        return (image_name_jpg, q, t)
+    for match in matches:
+        points2D_coordinate.append(fg_kp[match.trainIdx][:2])
+        points3D_coordinate.append(db_points_pos[match.queryIdx])
+    points2D_coordinate = numpy.asarray(points2D_coordinate)
+    points3D_coordinate = numpy.asarray(points3D_coordinate)
+    # localization with pycolmap absolute_pose_estimation
+    localize_start = time.time()
+    focal_length, principal_x, principal_y = params[0], params[1], \
+                                             params[2]
+    # Intrinsic Matrix
+    camera_K = numpy.array([[focal_length, 0, principal_x],
+                            [0, focal_length, principal_y],
+                            [0, 0, 1]], dtype=numpy.double)
+    dist_coeffs = numpy.zeros((4, 1))
+
+    result = cv2.solvePnPRansac(points3D_coordinate,
+                                points2D_coordinate, camera_K,
+                                dist_coeffs, flags=cv2.SOLVEPNP_P3P,
+                                iterationsCount=1000)
+
+    t = result[2].flatten()
+    q = R.from_rotvec(result[1].flatten()).as_quat()
+    print(result[0])
+    print("QueryLocal query_local() t: " + str(t))
+    q = Utils.correct_colmap_q(q)
+    print("QueryLocal query_local() q: " + str(q))
+    print("QueryLocal query_local() end .....")
+    return (image_name_jpg, q, t)
+
+
+def establish_env(image_name, sparse_dir, base_database_name, bank):
+    image_name_prefix = image_name.split('.')[0]
+    sparse_dir_bank = sparse_dir + str(bank) + "/"
+    base_images_db_path = sparse_dir_bank + base_database_name
+    upload_image_tmp_dir = sparse_dir_bank + "upload_temp/"
+    # the upload image file full path
+    upload_image_file_full_path = upload_image_tmp_dir + image_name + ".jpg"
+    # the upload image's feature database file full path
+    upload_database_file_full_path = upload_image_tmp_dir + image_name + ".db"
+    return (
+        image_name, upload_image_file_full_path, upload_database_file_full_path,
+        upload_image_tmp_dir,
+        base_images_db_path)

@@ -35,13 +35,6 @@ sparse_dir = workspace_dir + 'sparse/'
 database_name = 'database.db'
 
 
-class NDArrayEncoder(JSONEncoder):
-    def default(self, obj):
-        if isinstance(obj, numpy.ndarray):
-            return obj.tolist()
-        return JSONEncoder.default(self, obj)
-
-
 class CapturePhoto(Resource):
 
     def save_files(json_data, image_file_full_path, json_file_full_path, self):
@@ -156,25 +149,23 @@ class QueryLocal(Resource):
         json_data = request.get_json(force=True)
         bank = json_data['bank']
         b64 = json_data['b64']
-        feature_dim = json_data['feature_dim']
         image_name = json_data['image_name']
-        image_name = image_name.split('.')[0]
-        print("QueryLocal image_name: " + image_name)
-        sparse_dir_bank = sparse_dir + str(bank) + "/"
-        base_images_db_path = sparse_dir_bank + database_name
-        upload_image_tmp_dir = sparse_dir_bank + "upload_temp/"
-        # the upload image file full path
-        upload_image_file_full_path = upload_image_tmp_dir + image_name + ".jpg"
-        # the upload image's feature database file full path
-        upload_database_file_full_path = upload_image_tmp_dir + image_name + ".db"
-
+        (
+            image_name, upload_image_file_full_path,
+            upload_database_file_full_path,
+            upload_image_tmp_dir,
+            base_images_db_path) = QueryLocalUtil.establish_env(image_name,
+                                                                sparse_dir,
+                                                                database_name,
+                                                                bank)
+        print("QueryLocal image_name_prefix: " + image_name)
         print(
             "QueryLocal upload_image_file_full_path: " + upload_image_file_full_path)
         print(
             "QueryLocal upload_database_file_full_path: " + upload_database_file_full_path)
 
         QueryLocalUtil.save_image(b64, bank, upload_image_tmp_dir,
-                                  upload_image_file_full_path, feature_dim,
+                                  upload_image_file_full_path,
                                   self)
         QueryLocalUtil.get_feature_upload(COLMAP, image_name + ".db",
                                           upload_image_tmp_dir, self)
@@ -185,18 +176,34 @@ class QueryLocal(Resource):
             self)
         print("QueryLocal (image_name_jpg, q, t):" + str(
             (image_name_jpg, q, t)) + " FIN")
-        return json.dumps((image_name_jpg, q, t), cls=NDArrayEncoder)
+        return json.dumps((image_name_jpg, q, t), cls=Utils.NDArrayEncoder)
 
     ##
 
 
-# construction by images
-class StartMapConstructionByFeature(Resource):
+class CVQueryLocal(Resource):
     def post(self):
-        print("StartMapConstructionByFeature BEGIN, ")
+        print("CVQueryLocal BEGIN, ")
         json_data = request.get_json(force=True)
         bank = json_data['bank']
-        print("StartMapConstructionByFeature FIN")
+        fg_des = json_data['fg_des']
+        fg_kp = json_data['fg_kp']
+        params = json_data['params']
+        image_name_jpg = json_data['image_name']
+        #
+        sparse_dir_bank = sparse_dir + str(bank) + "/"
+        base_images_db_path = sparse_dir_bank + database_name
+        print("CVQueryLocal image_name_jpg: " + image_name_jpg)
+        print("CVQueryLocal sparse_dir_bank: " + sparse_dir_bank)
+        print("CVQueryLocal base_images_db_path: " + base_images_db_path)
+        (image_name_jpg, q, t) = QueryLocalUtil.compare_upload_base_local_cv(
+            base_images_db_path, image_name_jpg, fg_kp,
+            fg_des, params, self)
+        print("CVQueryLocal (image_name_jpg, q, t):" + str(
+            (image_name_jpg, q, t)) + " FIN")
+        return json.dumps((image_name_jpg, q, t), cls=Utils.NDArrayEncoder)
+
+    ##
 
 
 ## Actually setup the Api resource routing here
@@ -208,6 +215,7 @@ api.add_resource(CapturePhoto, '/capture-photo/captureb64')
 api.add_resource(StartMapConstruction, '/capture-photo/construct')
 api.add_resource(ClearWorkspace, '/capture-photo/clear')
 api.add_resource(QueryLocal, '/capture-photo/querylocal')
+api.add_resource(CVQueryLocal, '/capture-photo/cvquerylocal')
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5444, debug=True)

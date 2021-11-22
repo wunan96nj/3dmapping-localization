@@ -19,6 +19,13 @@ import get_point_pos_des
 import database
 from scipy.spatial.transform import Rotation as R
 
+
+class NDArrayEncoder(JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, numpy.ndarray):
+            return obj.tolist()
+        return JSONEncoder.default(self, obj)
+
 def correct_colmap_q(qvec):
     ret = numpy.roll(qvec, 1)
     return ret
@@ -35,7 +42,7 @@ def write_to_file(content_s, file_full_path, is_base64, self):
     return
 
 
-def create_image_db_env(image_base_dir,sparse_dir, bank, self):
+def create_image_db_env(image_base_dir, sparse_dir, bank, self):
     image_dir = image_base_dir + str(bank) + "/"
     sparse_dir_bank = sparse_dir + str(bank) + "/"
     tmp_database_dir = sparse_dir_bank + "temp/"
@@ -60,23 +67,35 @@ def feature_cv(database_path, img_folder, ):
     db.create_tables()
     for i in range(len(img_names)):
         img_name = img_names[i]
-        img_path = img_folder + "/" + img_name
+
         print("img_name:%s" % img_name)
-        model, width, height, params = 0, 3072, 2304, numpy.array(
-            (2457.6, 1536., 1152.))
+        (model, width, height, params) = get_camera_info_cv()
         camera_id = db.add_camera(model, width, height, params)
         image_id = db.add_image(img_name, camera_id)
-        img = cv2.imread(img_path, 0)
-        sift = cv2.SIFT_create(10000)
-        fg_kp, fg_des = sift.detectAndCompute(img, None)
-        fg_kp = numpy.array([fg_kp[i].pt for i in range(len(fg_kp))])
-        fg_des = numpy.array(fg_des).astype(numpy.uint8)
+        (fg_kp, fg_des) = feature_one_image_cv(img_name, img_folder, model,
+                                               width, height, params)
         print(fg_kp.shape)
         print(fg_des.shape)
         db.add_keypoints(image_id, fg_kp)
         db.add_descriptors(image_id, fg_des)
         db.commit()
     db.close()
+
+
+def get_camera_info_cv():
+    model, width, height, params = 0, 3072, 2304, numpy.array(
+        (2457.6, 1536., 1152.))
+    return (model, width, height, params)
+
+
+def feature_one_image_cv(img_name, img_folder):
+    img_path = img_folder + "/" + img_name
+    img = cv2.imread(img_path, 0)
+    sift = cv2.SIFT_create(10000)
+    fg_kp, fg_des = sift.detectAndCompute(img, None)
+    fg_kp = numpy.array([fg_kp[i].pt for i in range(len(fg_kp))])
+    fg_des = numpy.array(fg_des).astype(numpy.uint8)
+    return (fg_kp, fg_des)
 
 
 def feature_colmap(COLMAP, database_name, tmp_database_dir, image_dir, self):
@@ -94,7 +113,8 @@ def match_colmap(COLMAP, database_name, tmp_database_dir, image_dir, self):
     pIntrisics.wait()
 
 
-def point_triangulator_colmap(COLMAP, database_name, sparse_dir,tmp_database_dir, image_dir, self):
+def point_triangulator_colmap(COLMAP, database_name, sparse_dir,
+                              tmp_database_dir, image_dir, self):
     pIntrisics = subprocess.Popen(
         [COLMAP, "mapper", "--database_path",
          tmp_database_dir + database_name,
@@ -104,7 +124,7 @@ def point_triangulator_colmap(COLMAP, database_name, sparse_dir,tmp_database_dir
     pIntrisics.wait()
 
 
-def gen_newdb(sparse_dir,database_name,feature_dim, bank, self):
+def gen_newdb(sparse_dir, database_name, feature_dim, bank, self):
     print("StartMapConstruction gen_newdb() start .....")
     sparse_dir_bank = sparse_dir + str(bank) + "/"
     tmp_database_dir = sparse_dir_bank + "/temp/"
@@ -138,7 +158,7 @@ def gen_newdb(sparse_dir,database_name,feature_dim, bank, self):
     return
 
 
-def remove_build_useless_files(sparse_dir,feature_dim, bank, self):
+def remove_build_useless_files(sparse_dir, feature_dim, bank, self):
     print("StartMapConstruction remove_useless_files() start .....")
     sparse_dir_bank = sparse_dir + str(bank) + "/"
     tmp_database_dir = sparse_dir_bank + "temp/"

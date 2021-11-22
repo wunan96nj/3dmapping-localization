@@ -5,6 +5,8 @@ import base64
 import os
 from PIL import Image
 from datetime import datetime
+
+import Utils
 import read_model
 
 
@@ -109,8 +111,7 @@ def StartMapConstruction(url, token, mapName, windowSize, feature_dim, bank):
     return
 
 
-# opencv-python
-def QueryLocal(url, token, uploadImagePath, bank, feature_dim):
+def QueryLocal(url, token, uploadImagePath, bank):
     t_beign = time.time()
     print("QueryLocal...start...t_beign: " + str(int(t_beign)))
     print("QueryLocal...uploadImagePath: " + str(uploadImagePath))
@@ -120,7 +121,6 @@ def QueryLocal(url, token, uploadImagePath, bank, feature_dim):
     data = {
         "token": token,
         "bank": bank,
-        "feature_dim": feature_dim,
         "b64": str(ConvertToBase64(uploadImagePath), 'utf-8'),
         "image_name": image_name
     }
@@ -130,6 +130,35 @@ def QueryLocal(url, token, uploadImagePath, bank, feature_dim):
     t_end = time.time()
     print("QueryLocal...end...t_end:" + str(int(t_end)))
     print("total seconds:" + str(int(t_end) - int(t_beign)))
+    return
+
+
+def CVQueryLocal(url, token, cvImagePath, bank):
+    t_beign = time.time()
+    print("CVQueryLocal...start...t_beign: " + str(int(t_beign)))
+    print("CVQueryLocal...cvImagePath: " + str(cvImagePath))
+    complete_url = url + '/cvquerylocal'
+    (image_dir, image_name) = os.path.split(cvImagePath)
+    image_name = image_name.split('.')[0] + ".jpg"
+    (fg_kp, fg_des) = Utils.feature_one_image_cv(image_name, image_dir)
+    print("CVQueryLocal...fg_kp: " + str(fg_kp))
+    print("CVQueryLocal...fg_des: " + str(fg_des))
+    (model, width, height, params) = Utils.get_camera_info_cv()
+    print("CVQueryLocal...params: " + str(params))
+    data = {
+        "token": token,
+        "bank": bank,
+        "fg_kp": fg_kp,
+        "fg_des": fg_des,
+        "params": params,
+        "image_name": image_name
+    }
+    json_data = json.dumps(data, cls=Utils.NDArrayEncoder)
+    r = requests.post(complete_url, data=json_data)
+    print(r.text)
+    t_end = time.time()
+    print("CVQueryLocal...end...t_end:" + str(int(t_end)))
+    print("CVQueryLocal total seconds:" + str(int(t_end) - int(t_beign)))
     return
 
 
@@ -179,15 +208,29 @@ def main_test():
     bank = 0
     # feature_dim: colmap use 6, cv use 2
     feature_dim = 6
+    uploadImagePath = "/Users/akui/Desktop/south-building/images/P1180141.jpg"
+
+    print("post_to_server---------------BEGIN")
     ClearWorkspace(api_url, token, deleteAnchorImage, bank)
     post_to_server(api_url, token, image_base_dir, seq_base, bank)
+    print("post_to_server---------------END")
+
+    print("StartMapConstruction---------------BEGIN")
     StartMapConstruction(api_url, token, map_name, windowSize, feature_dim,
                          bank)
     print("StartMapConstruction---------------FIN")
-    uploadImagePath = "/Users/akui/Desktop/south-building/images/P1180141.jpg"
-    QueryLocal(api_url, token, uploadImagePath, bank, feature_dim)
+
+    print("QueryLocal---------------BEGIN")
+    QueryLocal(api_url, token, uploadImagePath, bank)
     printImageBinInfo()
     printTimestamp()
+    print("QueryLocal---------------END")
+
+    # print("CVQueryLocal---------------BEGIN")
+    # CVQueryLocal(api_url, token, uploadImagePath, bank)
+    # printImageBinInfo()
+    # printTimestamp()
+    # print("CVQueryLocal---------------END")
     return
 
 
