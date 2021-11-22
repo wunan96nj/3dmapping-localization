@@ -210,27 +210,27 @@ def main_test():
     feature_dim = 6
     uploadImagePath = "/Users/akui/Desktop/south-building/images/P1180141.jpg"
 
-    print("post_to_server---------------BEGIN")
-    ClearWorkspace(api_url, token, deleteAnchorImage, bank)
-    post_to_server(api_url, token, image_base_dir, seq_base, bank)
-    print("post_to_server---------------END")
-
-    print("StartMapConstruction---------------BEGIN")
-    StartMapConstruction(api_url, token, map_name, windowSize, feature_dim,
-                         bank)
-    print("StartMapConstruction---------------FIN")
-
-    print("QueryLocal---------------BEGIN")
-    QueryLocal(api_url, token, uploadImagePath, bank)
-    printImageBinInfo()
-    printTimestamp()
-    print("QueryLocal---------------END")
-
-    # print("CVQueryLocal---------------BEGIN")
-    # CVQueryLocal(api_url, token, uploadImagePath, bank)
+    # print("post_to_server---------------BEGIN")
+    # ClearWorkspace(api_url, token, deleteAnchorImage, bank)
+    # post_to_server(api_url, token, image_base_dir, seq_base, bank)
+    # print("post_to_server---------------END")
+    #
+    # print("StartMapConstruction---------------BEGIN")
+    # StartMapConstruction(api_url, token, map_name, windowSize, feature_dim,
+    #                      bank)
+    # print("StartMapConstruction---------------FIN")
+    #
+    # print("QueryLocal---------------BEGIN")
+    # QueryLocal(api_url, token, uploadImagePath, bank)
     # printImageBinInfo()
     # printTimestamp()
-    # print("CVQueryLocal---------------END")
+    # print("QueryLocal---------------END")
+
+    print("CVQueryLocal---------------BEGIN")
+    CVQueryLocal(api_url, token, uploadImagePath, bank)
+    printImageBinInfo()
+    printTimestamp()
+    print("CVQueryLocal---------------END")
     return
 
 

@@ -190,6 +190,10 @@ class CVQueryLocal(Resource):
         fg_kp = json_data['fg_kp']
         params = json_data['params']
         image_name_jpg = json_data['image_name']
+
+        fg_kp = numpy.array(fg_kp)
+        fg_des = numpy.array(fg_des).astype(numpy.uint8)
+        params = numpy.array(params)
         #
         sparse_dir_bank = sparse_dir + str(bank) + "/"
         base_images_db_path = sparse_dir_bank + database_name
