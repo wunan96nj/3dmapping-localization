@@ -84,8 +84,8 @@ def submit_image(api_url, token, imagePath, seq, bank):
 
     json_data = json.dumps(data)
     # print(json_data)
-    return_obj = json.loads(requests.post(complete_url, data=json_data).json())
-    print(str(return_obj))
+    ret = requests.post(complete_url, data=json_data).json()
+    print(ret)
     print("submit_image...end...")
     return
 
@@ -105,8 +105,8 @@ def StartMapConstruction(url, token, mapName, windowSize, feature_dim, bank):
         "window_size": windowSize
     }
     json_data = json.dumps(data)
-    return_obj = json.loads(requests.post(complete_url, data=json_data).json())
-    print(str(return_obj))
+    ret = requests.post(complete_url, data=json_data).json()
+    print(ret)
     print("StartMapConstruction...end...")
     return
 
@@ -249,15 +249,15 @@ def main_test():
     feature_dim = 6
     uploadImagePath = "/Users/akui/Desktop/south-building/images/P1180141.jpg"
 
-    # print("post_to_server---------------BEGIN")
-    # ClearWorkspace(api_url, token, deleteAnchorImage, bank)
-    # post_to_server(api_url, token, image_base_dir, seq_base, bank)
-    # print("post_to_server---------------END")
-    #
-    # print("StartMapConstruction---------------BEGIN")
-    # StartMapConstruction(api_url, token, map_name, windowSize, feature_dim,
-    #                      bank)
-    # print("StartMapConstruction---------------FIN")
+    print("post_to_server---------------BEGIN")
+    ClearWorkspace(api_url, token, deleteAnchorImage, bank)
+    post_to_server(api_url, token, image_base_dir, seq_base, bank)
+    print("post_to_server---------------END")
+
+    print("StartMapConstruction---------------BEGIN")
+    StartMapConstruction(api_url, token, map_name, windowSize, feature_dim,
+                         bank)
+    print("StartMapConstruction---------------FIN")
     #
     # print("QueryLocal---------------BEGIN")
     # QueryLocal(api_url, token, uploadImagePath, bank)
