@@ -355,5 +355,13 @@ def example_usage():
         os.remove(args.database_path)
 
 
+
+def test():
+    upload_database_file_full_path="/Users/akui/Desktop/sparse/0/upload_temp/P1180141.db"
+    query = COLMAPDatabase.connect(upload_database_file_full_path)
+    rows = query.execute("SELECT params FROM cameras")
+    params = next(rows)
+
+
 if __name__ == "__main__":
-    example_usage()
+    test()

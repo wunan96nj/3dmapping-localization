@@ -178,7 +178,7 @@ def main_test():
     deleteAnchorImage = True
     bank = 0
     # feature_dim: colmap use 6, cv use 2
-    feature_dim = 2
+    feature_dim = 6
     ClearWorkspace(api_url, token, deleteAnchorImage, bank)
     post_to_server(api_url, token, image_base_dir, seq_base, bank)
     StartMapConstruction(api_url, token, map_name, windowSize, feature_dim,

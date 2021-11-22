@@ -18,6 +18,8 @@ import write_to_nw_db
 import get_point_pos_des
 import database
 from scipy.spatial.transform import Rotation as R
+import Utils
+import QueryLocalUtil
 
 app = Flask(__name__)
 api = Api(app)
@@ -38,129 +40,6 @@ class NDArrayEncoder(JSONEncoder):
         if isinstance(obj, numpy.ndarray):
             return obj.tolist()
         return JSONEncoder.default(self, obj)
-
-
-class Utils(Resource):
-    def write_to_file(content_s, file_full_path, is_base64, self):
-        if is_base64:
-            base64_bytes = content_s.encode('ascii')
-            file_bytes = base64.b64decode(base64_bytes)
-        else:
-            file_bytes = content_s.encode('ascii')
-        with open(file_full_path, 'wb') as f:
-            f.write(file_bytes)
-        return
-
-    def create_image_db_env(bank, self):
-        image_dir = image_base_dir + str(bank) + "/"
-        sparse_dir_bank = sparse_dir + str(bank) + "/"
-        tmp_database_dir = sparse_dir_bank + "temp/"
-        print("image_dir: " + image_dir)
-        print("sparse_dir_bank: " + sparse_dir_bank)
-        print("tmp_database_dir: " + tmp_database_dir)
-        if not os.path.exists(sparse_dir):
-            os.mkdir(sparse_dir)
-        if not os.path.exists(sparse_dir_bank):
-            os.mkdir(sparse_dir_bank)
-        if not os.path.exists(tmp_database_dir):
-            os.mkdir(tmp_database_dir)
-        return (tmp_database_dir, image_dir)
-
-    def feature_cv(database_path, img_folder, ):
-        img_names = os.listdir(img_folder)
-        print(img_names)
-        if os.path.exists(database_path):
-            os.remove(database_path)
-        db = database.COLMAPDatabase.connect(database_path)
-        db.create_tables()
-        for i in range(len(img_names)):
-            img_name = img_names[i]
-            img_path = img_folder + "/" + img_name
-            print("img_name:%s" % img_name)
-            model, width, height, params = 0, 3072, 2304, np.array(
-                (2457.6, 1536., 1152.))
-            camera_id = db.add_camera(model, width, height, params)
-            image_id = db.add_image(img_name, camera_id)
-            img = cv2.imread(img_path, 0)
-            sift = cv2.SIFT_create(10000)
-            fg_kp, fg_des = sift.detectAndCompute(img, None)
-            fg_kp = numpy.array([fg_kp[i].pt for i in range(len(fg_kp))])
-            fg_des = numpy.array(fg_des).astype(numpy.uint8)
-            print(fg_kp.shape)
-            print(fg_des.shape)
-            db.add_keypoints(image_id, fg_kp)
-            db.add_descriptors(image_id, fg_des)
-            db.commit()
-        db.close()
-
-    def feature_colmap(tmp_database_dir, image_dir, self):
-        pIntrisics = subprocess.Popen(
-            [COLMAP, "feature_extractor", "--database_path",
-             tmp_database_dir + database_name, "--image_path", image_dir,
-             "--ImageReader.camera_model", "SIMPLE_PINHOLE"])
-        pIntrisics.wait()
-
-    def match_colmap(tmp_database_dir, image_dir, self):
-        pIntrisics = subprocess.Popen(
-            [COLMAP, "exhaustive_matcher", "--database_path",
-             tmp_database_dir + database_name])
-        pIntrisics.wait()
-
-    def point_triangulator_colmap(tmp_database_dir, image_dir, self):
-        pIntrisics = subprocess.Popen(
-            [COLMAP, "mapper", "--database_path",
-             tmp_database_dir + database_name,
-             "--image_path", image_dir, "--output_path",
-             sparse_dir, "--Mapper.ba_refine_focal_length", "0",
-             "--Mapper.ba_refine_extra_params", "0"])
-        pIntrisics.wait()
-
-    def gen_newdb(feature_dim, bank, self):
-        print("StartMapConstruction gen_newdb() start .....")
-        sparse_dir_bank = sparse_dir + str(bank) + "/"
-        tmp_database_dir = sparse_dir_bank + "/temp/"
-        print("sparse_dir_bank: " + sparse_dir_bank)
-        print("tmp_database_dir: " + tmp_database_dir)
-        print("1. write_to_nw_db.read_cip")
-        cameras, images, points = write_to_nw_db.read_cip(sparse_dir_bank)
-        print(cameras)
-        print("2. write_to_nw_db.read_database")
-        db_images, kp_table, des_table = write_to_nw_db.read_database(
-            tmp_database_dir, feature_dim)
-
-        print("3. write_to_nw_db.get_points_pos_des")
-        points_pos, points_des, points_rgb = write_to_nw_db.get_points_pos_des(
-            cameras, images,
-            points,
-            kp_table,
-            des_table)
-
-        # print(len(points))
-        # print(len(points_pos))
-        # print(len(points_des))
-        # print(points)
-        print(list(points_pos[-1]))
-        print(list(points_des[-1]))
-        print(list(points_rgb[-1]))
-        print("4. write_to_nw_db.write_points3D_nw_db")
-        write_to_nw_db.write_points3D_nw_db(points_pos, points_rgb, points_des,
-                                            sparse_dir_bank + database_name)
-        print("StartMapConstruction gen_newdb() end .....")
-        return
-
-    def remove_useless_files(feature_dim, bank, self):
-        print("StartMapConstruction remove_useless_files() start .....")
-        sparse_dir_bank = sparse_dir + str(bank) + "/"
-        tmp_database_dir = sparse_dir_bank + "temp/"
-        if os.path.exists(tmp_database_dir):
-            shutil.rmtree(tmp_database_dir, ignore_errors=True)
-        if os.path.exists(sparse_dir_bank + "project.ini"):
-            os.remove(sparse_dir_bank + "project.ini")
-        if os.path.exists(sparse_dir_bank + "points3D.bin"):
-            os.remove(sparse_dir_bank + "points3D.bin")
-
-        print("StartMapConstruction remove_useless_files() end .....")
-        return
 
 
 class CapturePhoto(Resource):
@@ -229,23 +108,27 @@ class StartMapConstruction(Resource):
         bank = json_data['bank']
         feature_dim = json_data['feature_dim']
         StartMapConstruction.build(feature_dim, bank, self)
-        Utils.gen_newdb(feature_dim, bank, self)
-        Utils.remove_useless_files(feature_dim, bank, self)
+        Utils.gen_newdb(sparse_dir, database_name, feature_dim, bank, self)
+        Utils.remove_build_useless_files(sparse_dir, feature_dim, bank, self)
         print("StartMapConstruction FIN")
         return
 
     def build(feature_dim, bank, self):
         print("StartMapConstruction build() start.....")
-        (tmp_database_dir, image_dir) = Utils.create_image_db_env(bank, self)
+        (tmp_database_dir, image_dir) = Utils.create_image_db_env(
+            image_base_dir, sparse_dir, bank, self)
         print("1. feature_extractor")
-        Utils.feature_colmap(tmp_database_dir, image_dir, self)
+        Utils.feature_colmap(COLMAP, database_name, tmp_database_dir, image_dir,
+                             self)
         # Utils.feature_cv(tmp_database_dir + database_name, image_dir)
 
         print("2. Matching")
-        Utils.match_colmap(tmp_database_dir, image_dir, self)
+        Utils.match_colmap(COLMAP, database_name, tmp_database_dir, image_dir,
+                           self)
 
         print("3. point_triangulator")
-        Utils.point_triangulator_colmap(tmp_database_dir, image_dir, self)
+        Utils.point_triangulator_colmap(COLMAP, database_name, sparse_dir,
+                                        tmp_database_dir, image_dir, self)
         print("StartMapConstruction build() end .....")
         return
 
@@ -290,126 +173,19 @@ class QueryLocal(Resource):
         print(
             "QueryLocal upload_database_file_full_path: " + upload_database_file_full_path)
 
-        QueryLocal.save_image(b64, bank, upload_image_tmp_dir,
-                              upload_image_file_full_path, feature_dim, self)
-        QueryLocal.get_feature_upload(upload_image_tmp_dir,
-                                      upload_database_file_full_path,
-                                      feature_dim, self)
-        (image_name_jpg, q, t) = QueryLocal.compare_upload_base_local(
+        QueryLocalUtil.save_image(b64, bank, upload_image_tmp_dir,
+                                  upload_image_file_full_path, feature_dim,
+                                  self)
+        QueryLocalUtil.get_feature_upload(COLMAP, image_name + ".db",
+                                          upload_image_tmp_dir, self)
+        (image_name_jpg, q, t) = QueryLocalUtil.compare_upload_base_local(
             base_images_db_path,
             upload_database_file_full_path,
-            image_name + ".jpg", feature_dim,
+            image_name + ".jpg",
             self)
         print("QueryLocal (image_name_jpg, q, t):" + str(
             (image_name_jpg, q, t)) + " FIN")
         return json.dumps((image_name_jpg, q, t), cls=NDArrayEncoder)
-
-    def correct_colmap_q(qvec):
-        ret = numpy.roll(qvec, 1)
-        return ret
-
-    def save_image(b64, bank, upload_image_tmp_dir, upload_image_file_full_path,
-                   feature_dim,
-                   self):
-        print("QueryLocal save_image() start .....")
-        if not os.path.exists(upload_image_tmp_dir):
-            os.mkdir(upload_image_tmp_dir)
-        print("write image file to " + upload_image_file_full_path)
-        Utils.write_to_file(b64, upload_image_file_full_path, True, self)
-        return
-
-    def get_feature_upload(upload_image_tmp_dir, upload_database_file_full_path,
-                           feature_dim,
-                           self):
-        print("QueryLocal get_feature_upload() start .....")
-        print(
-            "QueryLocal get_feature_upload() upload_image_tmp_dir: " + upload_image_tmp_dir)
-        print(
-            "QueryLocal get_feature_upload() upload_database_file_full_path: " + upload_database_file_full_path)
-        print("1. feature_extractor")
-        pIntrisics = subprocess.Popen(
-            [COLMAP, "feature_extractor", "--database_path",
-             upload_database_file_full_path, "--image_path",
-             upload_image_tmp_dir,
-             "--ImageReader.camera_model", "SIMPLE_PINHOLE"])
-        pIntrisics.wait()
-        return
-
-    def compare_upload_base_local(base_images_db_path,
-                                  upload_database_file_full_path,
-                                  image_name_jpg, feature_dim,
-                                  self):
-        print("QueryLocal query_local() start .....")
-
-        print(
-            "QueryLocal query_local() base_images_db_path: " + base_images_db_path)
-        print(
-            "QueryLocal query_local() upload_database_file_full_path: " + upload_database_file_full_path)
-        print(
-            "QueryLocal query_local() image_name_jpg: " + image_name_jpg)
-        shape = (-1, feature_dim)
-        # read the feture of database of images dataware
-        db_points_pos, db_points_rgb, db_points_des = get_point_pos_des.get_points_pos_des(
-            base_images_db_path)
-
-        # query uploaded image's database
-        query = database.COLMAPDatabase.connect(upload_database_file_full_path)
-        rows = query.execute("SELECT params FROM cameras")
-        params = next(rows)
-        params = database.blob_to_array(params[0], numpy.float64)
-        query_kp = dict(
-            (image_id,
-             database.blob_to_array(data, numpy.float32, (-1, 6)))
-            for image_id, data in query.execute(
-                "SELECT image_id, data FROM keypoints"))
-        query_des = dict(
-            (image_id,
-             database.blob_to_array(data, numpy.uint8, (-1, 128)))
-            for image_id, data in query.execute(
-                "SELECT image_id, data FROM descriptors"))
-        # localize every image in the query database
-        for image_id in range(1, 2):
-            print(image_id)
-            fg_kp = query_kp[image_id]
-            fg_des = query_des[image_id]
-            # print(fg_kp.shape)
-            # print(fg_des.shape)
-            match_start = time.time()
-            bf = cv2.BFMatcher(cv2.NORM_L1, crossCheck=True)
-            matches = bf.match(db_points_des, fg_des)
-            matches = sorted(matches, key=lambda x: x.distance)
-            print("time used for knnMatching:", time.time() - match_start)
-            points2D_coordinate = []
-            points3D_coordinate = []
-
-            for match in matches:
-                points2D_coordinate.append(fg_kp[match.trainIdx][:2])
-                points3D_coordinate.append(db_points_pos[match.queryIdx])
-            points2D_coordinate = numpy.asarray(points2D_coordinate)
-            points3D_coordinate = numpy.asarray(points3D_coordinate)
-            # localization with pycolmap absolute_pose_estimation
-            localize_start = time.time()
-            focal_length, principal_x, principal_y = params[0], params[1], \
-                                                     params[2]
-            # Intrinsic Matrix
-            camera_K = numpy.array([[focal_length, 0, principal_x],
-                                    [0, focal_length, principal_y],
-                                    [0, 0, 1]], dtype=numpy.double)
-            dist_coeffs = numpy.zeros((4, 1))
-
-            result = cv2.solvePnPRansac(points3D_coordinate,
-                                        points2D_coordinate, camera_K,
-                                        dist_coeffs, flags=cv2.SOLVEPNP_P3P,
-                                        iterationsCount=1000)
-
-            t = result[2].flatten()
-            q = R.from_rotvec(result[1].flatten()).as_quat()
-            print(result[0])
-            print("QueryLocal query_local() t: " + str(t))
-            q = QueryLocal.correct_colmap_q(q)
-            print("QueryLocal query_local() q: " + str(q))
-            print("QueryLocal query_local() end .....")
-            return (image_name_jpg, q, t)
 
     ##
 
