@@ -1,7 +1,7 @@
-import read_write_model
+from map3d.util.calc import read_write_model
 import os
-import database
-import nw_database
+from map3d.util.db import database
+from map3d.util.db import nw_database
 import numpy as np
 
 

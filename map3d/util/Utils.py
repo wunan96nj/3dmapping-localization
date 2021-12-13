@@ -7,8 +7,7 @@ import shutil
 from json import JSONEncoder
 import os
 import subprocess
-import write_to_nw_db
-import database
+from map3d.util.db import database, write_to_nw_db
 
 
 class NDArrayEncoder(JSONEncoder):

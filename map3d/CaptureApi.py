@@ -7,8 +7,7 @@ import json
 from flask import Flask, jsonify, request
 from flask_restful import reqparse, Api, Resource
 import os
-from map3d import Utils
-import QueryLocalUtil
+from map3d.util import QueryLocalUtil, Utils
 
 app = Flask(__name__)
 api = Api(app)

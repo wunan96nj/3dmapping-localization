@@ -1,13 +1,15 @@
-import read_model
+
 import os
-import database
 import numpy as np
+from map3d.util.calc import read_model
+from map3d.util.db import database
+
 
 def read_cameras_images(file_path):
 	cameras_bin = os.path.join(file_path, "cameras.bin")
 	images_bin = os.path.join(file_path, "images.bin")
 	#points_bin = os.path.join(file_path, "points3D.bin")
-	
+
 	cameras = read_model.read_cameras_binary(cameras_bin)
 	images = read_model.read_images_binary(images_bin)
 	#points = read_model.read_points3d_binary(points_bin)
@@ -89,7 +91,7 @@ def main():
 	print(len(points_pos))
 	print(len(points_des))
 
-	
+
 
 if __name__ == '__main__':
 	main()
