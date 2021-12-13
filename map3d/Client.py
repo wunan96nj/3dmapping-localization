@@ -23,7 +23,7 @@ def main_test():
 
     print("StartMapConstruction---------------BEGIN")
     CaptureSDK.StartMapConstruction(api_url, token, map_name, windowSize, feature_dim,
-                         bank)
+                                    bank)
     print("StartMapConstruction---------------FIN")
     #
     print("QueryLocal---------------BEGIN")

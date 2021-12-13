@@ -6,7 +6,7 @@ import os
 from PIL import Image
 from datetime import datetime
 import numpy
-import Utils
+from map3d import Utils
 import read_model
 
 
