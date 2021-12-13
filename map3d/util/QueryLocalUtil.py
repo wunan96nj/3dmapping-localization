@@ -4,6 +4,7 @@ import numpy
 import cv2
 import time
 import os
+from map3d.util.calc import get_point_feature
 from map3d.util.calc import get_point_pos_des
 from map3d.util.db import database
 from scipy.spatial.transform import Rotation as R
@@ -34,20 +35,24 @@ def get_feature_upload(COLMAP, database_name, upload_image_tmp_dir,
 
 
 # db of upload image, db of total image bank
-def compare_upload_base_local(base_images_db_path,
+def compare_upload_base_local(base_bank_dir,
                               upload_database_file_full_path,
                               image_name_jpg,
                               self):
     print("QueryLocal query_local() start .....")
     print(
-        "QueryLocal query_local() base_images_db_path: " + base_images_db_path)
+        "QueryLocal query_local() base_bank_dir: " + base_bank_dir)
     print(
         "QueryLocal query_local() upload_database_file_full_path: " + upload_database_file_full_path)
     print(
         "QueryLocal query_local() image_name_jpg: " + image_name_jpg)
     # read the feture of database of images dataware
-    db_points_pos, db_points_rgb, db_points_des = get_point_pos_des.get_points_pos_des(
-        base_images_db_path)
+    # db_points_pos, db_points_rgb, db_points_des = get_point_pos_des.get_points_pos_des(
+    #     base_images_db_path)
+    db_cameras, db_images, db_points = get_point_feature.read_cip(base_bank_dir)
+    db_images_table, db_kp_table, db_des_table = get_point_feature.read_database(base_bank_dir)
+    db_points_pos, db_points_des, dp_points_rgb = get_point_feature.get_points_pos_des(db_cameras, db_images, db_points,
+                                                                                       db_kp_table, db_des_table)
 
     (query_kp, query_des, params) = get_upload_image_dbinfo(
         upload_database_file_full_path)
@@ -65,10 +70,13 @@ def compare_upload_base_local(base_images_db_path,
 
 
 # cv feature, db of total image bank
-def compare_upload_base_local_cv(base_images_db_path, image_name_jpg, fg_kp,
+def compare_upload_base_local_cv(base_bank_dir, image_name_jpg, fg_kp,
                                  fg_des, params, self):
-    db_points_pos, db_points_rgb, db_points_des = get_point_pos_des.get_points_pos_des(
-        base_images_db_path)
+    db_cameras, db_images, db_points = get_point_feature.read_cip(base_bank_dir)
+    db_images_table, db_kp_table, db_des_table = get_point_feature.read_database(base_bank_dir)
+    db_points_pos, db_points_des, dp_points_rgb = get_point_feature.get_points_pos_des(db_cameras, db_images, db_points,
+                                                                                       db_kp_table, db_des_table)
+
     for image_id in range(1, 2):
         (image_name_jpg, q, t) = match_by_fg_kp_fg_des(fg_kp, fg_des,
                                                        db_points_des,
@@ -145,7 +153,6 @@ def match_by_fg_kp_fg_des(fg_kp, fg_des, db_points_des, db_points_pos, params,
 def establish_env(image_name, sparse_dir, base_database_name, bank):
     image_name_prefix = image_name.split('.')[0]
     sparse_dir_bank = sparse_dir + str(bank) + "/"
-    base_images_db_path = sparse_dir_bank + base_database_name
     upload_image_tmp_dir = sparse_dir_bank + "upload_temp/"
     # the upload image file full path
     upload_image_file_full_path = upload_image_tmp_dir + image_name + ".jpg"
@@ -154,4 +161,4 @@ def establish_env(image_name, sparse_dir, base_database_name, bank):
     return (
         image_name, upload_image_file_full_path, upload_database_file_full_path,
         upload_image_tmp_dir,
-        base_images_db_path)
+        sparse_dir_bank)

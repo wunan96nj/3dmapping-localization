@@ -89,27 +89,24 @@ class StartMapConstruction(Resource):
         bank = json_data['bank']
         feature_dim = json_data['feature_dim']
         StartMapConstruction.build(feature_dim, bank, self)
-        Utils.gen_newdb(sparse_dir, database_name, feature_dim, bank, self)
-        Utils.remove_build_useless_files(sparse_dir, feature_dim, bank, self)
+        # Utils.gen_newdb(sparse_dir, database_name, feature_dim, bank, self)
+        # Utils.remove_build_useless_files(sparse_dir, feature_dim, bank, self)
         print("StartMapConstruction FIN")
         return
 
     def build(feature_dim, bank, self):
         print("StartMapConstruction build() start.....")
-        (tmp_database_dir, image_dir) = Utils.create_image_db_env(
+        (database_dir, image_dir) = Utils.create_image_db_env(
             image_base_dir, sparse_dir, bank, self)
         print("1. feature_extractor")
-        Utils.feature_colmap(COLMAP, database_name, tmp_database_dir, image_dir,
+        Utils.feature_colmap(COLMAP, database_name, database_dir, image_dir,
                              self)
         # Utils.feature_cv(tmp_database_dir + database_name, image_dir)
-
         print("2. Matching")
-        Utils.match_colmap(COLMAP, database_name, tmp_database_dir, image_dir,
-                           self)
+        Utils.match_colmap(COLMAP, database_name, database_dir, image_dir, self)
 
         print("3. point_triangulator")
-        Utils.point_triangulator_colmap(COLMAP, database_name, sparse_dir,
-                                        tmp_database_dir, image_dir, self)
+        Utils.point_triangulator_colmap(COLMAP, database_name, sparse_dir, database_dir, image_dir, self)
         print("StartMapConstruction build() end .....")
         return
 
@@ -142,7 +139,7 @@ class QueryLocal(Resource):
             image_name, upload_image_file_full_path,
             upload_database_file_full_path,
             upload_image_tmp_dir,
-            base_images_db_path) = QueryLocalUtil.establish_env(image_name,
+            sparse_dir_bank) = QueryLocalUtil.establish_env(image_name,
                                                                 sparse_dir,
                                                                 database_name,
                                                                 bank)
@@ -158,7 +155,7 @@ class QueryLocal(Resource):
         QueryLocalUtil.get_feature_upload(COLMAP, image_name + ".db",
                                           upload_image_tmp_dir, self)
         (image_name_jpg, q, t) = QueryLocalUtil.compare_upload_base_local(
-            base_images_db_path,
+            sparse_dir_bank,
             upload_database_file_full_path,
             image_name + ".jpg",
             self)
@@ -184,12 +181,10 @@ class CVQueryLocal(Resource):
         params = numpy.array(params)
         #
         sparse_dir_bank = sparse_dir + str(bank) + "/"
-        base_images_db_path = sparse_dir_bank + database_name
         print("CVQueryLocal image_name_jpg: " + image_name_jpg)
         print("CVQueryLocal sparse_dir_bank: " + sparse_dir_bank)
-        print("CVQueryLocal base_images_db_path: " + base_images_db_path)
         (image_name_jpg, q, t) = QueryLocalUtil.compare_upload_base_local_cv(
-            base_images_db_path, image_name_jpg, fg_kp,
+            sparse_dir_bank, image_name_jpg, fg_kp,
             fg_des, params, self)
         print("CVQueryLocal (image_name_jpg, q, t):" + str(
             (image_name_jpg, q, t)) + " FIN")

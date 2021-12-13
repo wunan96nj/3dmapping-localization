@@ -16,6 +16,7 @@ class NDArrayEncoder(JSONEncoder):
             return obj.tolist()
         return JSONEncoder.default(self, obj)
 
+
 def correct_colmap_q(qvec):
     ret = numpy.roll(qvec, 1)
     return ret
@@ -35,17 +36,17 @@ def write_to_file(content_s, file_full_path, is_base64, self):
 def create_image_db_env(image_base_dir, sparse_dir, bank, self):
     image_dir = image_base_dir + str(bank) + "/"
     sparse_dir_bank = sparse_dir + str(bank) + "/"
-    tmp_database_dir = sparse_dir_bank + "temp/"
+    database_dir = sparse_dir_bank
     print("image_dir: " + image_dir)
     print("sparse_dir_bank: " + sparse_dir_bank)
-    print("tmp_database_dir: " + tmp_database_dir)
+    print("database_dir: " + database_dir)
     if not os.path.exists(sparse_dir):
         os.mkdir(sparse_dir)
     if not os.path.exists(sparse_dir_bank):
         os.mkdir(sparse_dir_bank)
-    if not os.path.exists(tmp_database_dir):
-        os.mkdir(tmp_database_dir)
-    return (tmp_database_dir, image_dir)
+    if not os.path.exists(database_dir):
+        os.mkdir(database_dir)
+    return (database_dir, image_dir)
 
 
 def feature_cv(database_path, img_folder, ):
@@ -113,7 +114,7 @@ def point_triangulator_colmap(COLMAP, database_name, sparse_dir,
          "--Mapper.ba_refine_extra_params", "0"])
     pIntrisics.wait()
 
-
+'''
 def gen_newdb(sparse_dir, database_name, feature_dim, bank, self):
     print("StartMapConstruction gen_newdb() start .....")
     sparse_dir_bank = sparse_dir + str(bank) + "/"
@@ -146,8 +147,8 @@ def gen_newdb(sparse_dir, database_name, feature_dim, bank, self):
                                         sparse_dir_bank + database_name)
     print("StartMapConstruction gen_newdb() end .....")
     return
-
-
+'''
+'''
 def remove_build_useless_files(sparse_dir, feature_dim, bank, self):
     print("StartMapConstruction remove_useless_files() start .....")
     sparse_dir_bank = sparse_dir + str(bank) + "/"
@@ -161,3 +162,4 @@ def remove_build_useless_files(sparse_dir, feature_dim, bank, self):
 
     print("StartMapConstruction remove_useless_files() end .....")
     return
+'''
