@@ -8,6 +8,8 @@ from json import JSONEncoder
 import os
 import subprocess
 from map3d.util.db import database, write_to_nw_db
+from map3d.util.calc import get_point_pos_des, get_point_feature
+import open3d
 
 
 class NDArrayEncoder(JSONEncoder):
@@ -15,6 +17,23 @@ class NDArrayEncoder(JSONEncoder):
         if isinstance(obj, numpy.ndarray):
             return obj.tolist()
         return JSONEncoder.default(self, obj)
+
+
+# dp_points_rgb [0-255]
+def write_xyz_to_point_cloud_file(db_points_pos, db_points_des, dp_points_rgb, ply_file_path):
+    pcd = open3d.geometry.PointCloud()
+    pcd.points = open3d.utility.Vector3dVector(db_points_pos)
+    pcd.colors = open3d.utility.Vector3dVector(dp_points_rgb.astype(numpy.float64) / 255.0)
+    open3d.io.write_point_cloud(ply_file_path, pcd)
+    return
+
+
+def load_all_3dmap_cloud_point(base_bank_dir):
+    db_cameras, db_images, db_points = get_point_feature.read_cip(base_bank_dir)
+    db_images_table, db_kp_table, db_des_table = get_point_feature.read_database(base_bank_dir)
+    db_points_pos, db_points_des, dp_points_rgb = get_point_feature.get_points_pos_des(db_cameras, db_images, db_points,
+                                                                                       db_kp_table, db_des_table)
+    return (db_points_pos, db_points_des, dp_points_rgb)
 
 
 def correct_colmap_q(qvec):
@@ -114,6 +133,14 @@ def point_triangulator_colmap(COLMAP, database_name, sparse_dir,
          "--Mapper.ba_refine_extra_params", "0"])
     pIntrisics.wait()
 
+
+def printImageBinInfo(uploadImagePath, image_bin_path="/Users/akui/Desktop/sparse/0/images.bin"):
+    (image_dir, the_image_name) = os.path.split(uploadImagePath)
+
+    return (image_id, qvec, tvec,
+            camera_id, image_name,
+            xys, point3D_ids)
+
 '''
 def gen_newdb(sparse_dir, database_name, feature_dim, bank, self):
     print("StartMapConstruction gen_newdb() start .....")
@@ -163,3 +190,15 @@ def remove_build_useless_files(sparse_dir, feature_dim, bank, self):
     print("StartMapConstruction remove_useless_files() end .....")
     return
 '''
+
+
+def main():
+    base_bank_dir = "/Users/akui/Desktop/sparse/0"
+    ply_file_path = "/Users/akui/Desktop/test.ply"
+    (db_points_pos, db_points_des, dp_points_rgb) = load_all_3dmap_cloud_point(base_bank_dir)
+    write_xyz_to_point_cloud_file(db_points_pos, db_points_des, dp_points_rgb, ply_file_path)
+    return
+
+
+if __name__ == "__main__":
+    main()

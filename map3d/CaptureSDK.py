@@ -91,7 +91,6 @@ def submit_image(api_url, token, imagePath, seq, bank):
 
 
 def StartMapConstruction(url, token, mapName, windowSize, feature_dim, bank):
-    print("StartMapConstruction...start...")
     complete_url = url + '/construct'
     data = {
         "token": token,
@@ -106,15 +105,30 @@ def StartMapConstruction(url, token, mapName, windowSize, feature_dim, bank):
     }
     json_data = json.dumps(data)
     ret = requests.post(complete_url, data=json_data).json()
-    print(ret)
-    print("StartMapConstruction...end...")
+    return ret
+
+
+def Query3DCouldPoint(url, token, bank, params=None):
+    t_beign = time.time()
+    print("QueryLocal...start...t_beign: " + str(int(t_beign)))
+    print("QueryLocal...bank: " + str(bank))
+    complete_url = url + '/query3dcloudpoint'
+    data = {
+        "token": token,
+        "bank": bank,
+        "params": params
+    }
+    json_data = json.dumps(data)
+    return_obj = json.loads(requests.post(complete_url, data=json_data).json())
+    return return_obj
+
+
+def Write3dmapPointCloudPlyFile(db_points_pos, db_points_des, dp_points_rgb, ply_file_path):
+    Utils.write_xyz_to_point_cloud_file(db_points_pos, db_points_des, dp_points_rgb, ply_file_path)
     return
 
 
 def QueryLocal(url, token, uploadImagePath, bank):
-    t_beign = time.time()
-    print("QueryLocal...start...t_beign: " + str(int(t_beign)))
-    print("QueryLocal...uploadImagePath: " + str(uploadImagePath))
     complete_url = url + '/querylocal'
     (image_dir, image_name) = os.path.split(uploadImagePath)
     image_name = image_name.split('.')[0] + ".jpg"
@@ -130,25 +144,7 @@ def QueryLocal(url, token, uploadImagePath, bank):
     ret_image_name = return_obj[0]
     ret_qvec = return_obj[1]
     ret_tvec = return_obj[2]
-    (image_id, qvec, tvec,
-     camera_id, image_name,
-     xys, point3D_ids) = printImageBinInfo(uploadImagePath)
-    print(
-        "printImageBinInfo (image_id, qvec, tvec, camera_id, image_name, xys, point3D_ids):%s" % str(
-            (
-                image_id, qvec, tvec,
-                camera_id, image_name,
-                xys, point3D_ids)))
-    distance_q = numpy.sqrt(
-        numpy.sum(numpy.square(numpy.array(ret_qvec) - qvec)))
-    distance_t = numpy.sqrt(
-        numpy.sum(numpy.square(numpy.array(ret_tvec) - tvec)))
-    print("QueryLocal...distance_q:" + str(distance_q))
-    print("QueryLocal...distance_t:" + str(distance_t))
-    t_end = time.time()
-    print("QueryLocal...end...t_end:" + str(int(t_end)))
-    print("total seconds:" + str(int(t_end) - int(t_beign)))
-    return
+    return (ret_image_name, ret_qvec, ret_tvec)
 
 
 def CVQueryLocal(url, token, cvImagePath, bank):
@@ -177,42 +173,34 @@ def CVQueryLocal(url, token, cvImagePath, bank):
     ret_image_name = return_obj[0]
     ret_qvec = return_obj[1]
     ret_tvec = return_obj[2]
-    (image_id, qvec, tvec,
-     camera_id, image_name,
-     xys, point3D_ids) = printImageBinInfo(cvImagePath)
-    print(
-        "printImageBinInfo (image_id, qvec, tvec, camera_id, image_name, xys, point3D_ids):%s" % str(
-            (
-                image_id, qvec, tvec,
-                camera_id, image_name,
-                xys, point3D_ids)))
-    distance_q = numpy.sqrt(
-        numpy.sum(numpy.square(numpy.array(ret_qvec) - qvec)))
-    distance_t = numpy.sqrt(
-        numpy.sum(numpy.square(numpy.array(ret_tvec) - tvec)))
-    print("CVQueryLocal...distance_q:" + str(distance_q))
-    print("CVQueryLocal...distance_t:" + str(distance_t))
-    t_end = time.time()
-    print("CVQueryLocal...end...t_end:" + str(int(t_end)))
-    print("CVQueryLocal total seconds:" + str(int(t_end) - int(t_beign)))
-    return
+    return (ret_image_name, ret_qvec, ret_tvec)
+
+
+def ImageBinInfo(url, token, image_name, bank):
+    # image_name = image_name.split('.')[0]
+    print("ImageBinInfo...bank: " + str(bank))
+    print("ImageBinInfo...image_name: " + str(image_name))
+    complete_url = url + '/imagebininfo'
+    data = {
+        "token": token,
+        "bank": bank,
+        "image_name": image_name
+    }
+    json_data = json.dumps(data, cls=Utils.NDArrayEncoder)
+    return_obj = json.loads(requests.post(complete_url, data=json_data).json())
+    return return_obj
 
 
 def ClearWorkspace(url, token, deleteAnchorImage, bank):
-    print("ClearWorkspace...start...")
     complete_url = url + '/clear'
     data = {
         "token": token,
         "bank": bank,  # default workspace/image bank
         "anchor": deleteAnchorImage
     }
-
     json_data = json.dumps(data)
-
     r = requests.post(complete_url, data=json_data)
-    print(r.text)
-    print("ClearWorkspace...end...")
-    return
+    return r
 
 
 def printTimestamp():
@@ -220,18 +208,3 @@ def printTimestamp():
     dt_string = now.strftime("%Y/%m/%d/ %H:%M:%S")
     print("date and time =", dt_string)
     return
-
-
-def printImageBinInfo(uploadImagePath):
-    (image_dir, the_image_name) = os.path.split(uploadImagePath)
-    image_bin_path = "/Users/akui/Desktop/sparse/0/images.bin"
-    (image_id, qvec, tvec,
-     camera_id, image_name,
-     xys, point3D_ids) = read_model.read_images_binary_for_one(image_bin_path,
-                                                               the_image_name)
-    return (image_id, qvec, tvec,
-            camera_id, image_name,
-            xys, point3D_ids)
-
-
-

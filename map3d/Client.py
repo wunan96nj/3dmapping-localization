@@ -1,3 +1,5 @@
+import numpy
+
 import CaptureSDK
 
 
@@ -16,27 +18,65 @@ def main_test():
     feature_dim = 6
     uploadImagePath = "/Users/akui/Desktop/south-building/images/P1180141.jpg"
 
-    # print("post_to_server---------------BEGIN")
-    # CaptureSDK.ClearWorkspace(api_url, token, deleteAnchorImage, bank)
-    # CaptureSDK.post_to_server(api_url, token, image_base_dir, seq_base, bank)
-    # print("post_to_server---------------END")
-    #
-    # print("StartMapConstruction---------------BEGIN")
-    # CaptureSDK.StartMapConstruction(api_url, token, map_name, windowSize, feature_dim,
-    #                                 bank)
-    # print("StartMapConstruction---------------FIN")
-    #
+    print("post_to_server---------------BEGIN")
+    print("ClearWorkspace...start...")
+    r = CaptureSDK.ClearWorkspace(api_url, token, deleteAnchorImage, bank)
+    print(r.text)
+    CaptureSDK.post_to_server(api_url, token, image_base_dir, seq_base, bank)
+    print("ClearWorkspace...end...")
+    print("post_to_server---------------END")
+
+    print("StartMapConstruction---------------BEGIN")
+    print("StartMapConstruction...start...")
+    ret = CaptureSDK.StartMapConstruction(api_url, token, map_name, windowSize, feature_dim,
+                                          bank)
+    print(ret)
+    print("StartMapConstruction...end...")
+    print("StartMapConstruction---------------FIN")
+
     print("QueryLocal---------------BEGIN")
-    CaptureSDK.QueryLocal(api_url, token, uploadImagePath, bank)
-    CaptureSDK.printTimestamp()
+    print("QueryLocal...uploadImagePath: " + str(uploadImagePath))
+    (ret_image_name, ret_qvec, ret_tvec) = CaptureSDK.QueryLocal(
+        api_url, token, uploadImagePath, bank)
+    print(
+        "(ret_image_name, ret_qvec, ret_tvec):%s" % str(
+            (ret_image_name, ret_qvec, ret_tvec)))
+    ##
+    (image_id, qvec, tvec,
+     camera_id, image_name,
+     xys, point3D_ids) = CaptureSDK.ImageBinInfo(api_url, token, ret_image_name, bank)
+    distance_q = numpy.sqrt(
+        numpy.sum(numpy.square(numpy.array(ret_qvec) - qvec)))
+    distance_t = numpy.sqrt(
+        numpy.sum(numpy.square(numpy.array(ret_tvec) - tvec)))
+    print(
+        "(distance_q, distance_t):%s" % str(
+            (distance_q, distance_t)))
     print("QueryLocal---------------END")
 
     print("CVQueryLocal---------------BEGIN")
-    CaptureSDK.CVQueryLocal(api_url, token, uploadImagePath, bank)
-
-    CaptureSDK.printTimestamp()
+    (ret_image_name, ret_qvec, ret_tvec) = CaptureSDK.CVQueryLocal(
+        api_url, token, uploadImagePath, bank)
+    print(
+        "(ret_image_name, ret_qvec, ret_tvec):%s" % str(
+            (ret_image_name, ret_qvec, ret_tvec)))
+    (image_id, qvec, tvec,
+     camera_id, image_name,
+     xys, point3D_ids) = CaptureSDK.ImageBinInfo(api_url, token, ret_image_name, bank)
+    distance_q = numpy.sqrt(
+        numpy.sum(numpy.square(numpy.array(ret_qvec) - qvec)))
+    distance_t = numpy.sqrt(
+        numpy.sum(numpy.square(numpy.array(ret_tvec) - tvec)))
+    print(
+        "(distance_q, distance_t):%s" % str(
+            (distance_q, distance_t)))
     print("CVQueryLocal---------------END")
-    return
+
+    # print("Query3DCouldPoint to file ---------------BEGIN")
+    # return_json = CaptureSDK.Query3DCouldPoint(api_url, token, bank)
+    # print(return_json)
+    # print("Query3DCouldPoint---------------END")
+    # return
 
 
 def main():

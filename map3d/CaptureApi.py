@@ -8,6 +8,7 @@ from flask import Flask, jsonify, request
 from flask_restful import reqparse, Api, Resource
 import os
 from map3d.util import QueryLocalUtil, Utils
+from map3d.util.calc import read_model
 
 app = Flask(__name__)
 api = Api(app)
@@ -18,6 +19,7 @@ parser.add_argument('task', type=str)
 COLMAP = "/Users/akui/eclipse-workspace/py-colmap-rest-gate/map3d/COLMAP.app/Contents/MacOS/colmap"
 workspace_dir = "/Users/akui/Desktop" + "/"
 image_base_dir = workspace_dir + "images/"
+image_bin_name = "images.bin"
 json_base_dir = workspace_dir + "json/"
 sparse_dir = workspace_dir + 'sparse/'
 database_name = 'database.db'
@@ -136,14 +138,14 @@ class QueryLocal(Resource):
         b64 = json_data['b64']
         image_name = json_data['image_name']
         (
-            image_name, upload_image_file_full_path,
+            image_name_prefix, upload_image_file_full_path,
             upload_database_file_full_path,
             upload_image_tmp_dir,
             sparse_dir_bank) = QueryLocalUtil.establish_env(image_name,
-                                                                sparse_dir,
-                                                                database_name,
-                                                                bank)
-        print("QueryLocal image_name_prefix: " + image_name)
+                                                            sparse_dir,
+                                                            database_name,
+                                                            bank)
+        print("QueryLocal image_name_prefix: " + image_name_prefix)
         print(
             "QueryLocal upload_image_file_full_path: " + upload_image_file_full_path)
         print(
@@ -152,12 +154,12 @@ class QueryLocal(Resource):
         QueryLocalUtil.save_image(b64, bank, upload_image_tmp_dir,
                                   upload_image_file_full_path,
                                   self)
-        QueryLocalUtil.get_feature_upload(COLMAP, image_name + ".db",
+        QueryLocalUtil.get_feature_upload(COLMAP, image_name_prefix + ".db",
                                           upload_image_tmp_dir, self)
         (image_name_jpg, q, t) = QueryLocalUtil.compare_upload_base_local(
             sparse_dir_bank,
             upload_database_file_full_path,
-            image_name + ".jpg",
+            image_name_prefix + ".jpg",
             self)
         print("QueryLocal (image_name_jpg, q, t):" + str(
             (image_name_jpg, q, t)) + " FIN")
@@ -193,6 +195,38 @@ class CVQueryLocal(Resource):
     ##
 
 
+class Query3DCouldPoint(Resource):
+    def post(self):
+        print("Query3DCouldPoint BEGIN, ")
+        json_data = request.get_json(force=True)
+        bank = json_data['bank']
+        params = json_data['params']
+        #
+        sparse_dir_bank = sparse_dir + str(bank) + "/"
+        print("Query3DCouldPoint sparse_dir_bank: " + sparse_dir_bank)
+        (db_points_pos, db_points_des, dp_points_rgb) = Utils.load_all_3dmap_cloud_point(sparse_dir_bank)
+        print("Query3DCouldPoint (db_points_pos, db_points_des, dp_points_rgb):" + str(
+            (db_points_pos, db_points_des, dp_points_rgb)) + " FIN")
+        return json.dumps((db_points_pos, db_points_des, dp_points_rgb), cls=Utils.NDArrayEncoder)
+
+
+class ImageBinInfo(Resource):
+    def post(self):
+        print("ImageBinInfo BEGIN, ")
+        json_data = request.get_json(force=True)
+        bank = json_data['bank']
+        the_image_name = json_data['image_name']
+        sparse_dir_bank = sparse_dir + str(bank) + "/"
+        image_bin_path = sparse_dir_bank + image_bin_name
+        (image_id, qvec, tvec,
+         camera_id, image_name,
+         xys, point3D_ids) = read_model.read_images_binary_for_one(image_bin_path,
+                                                                   the_image_name)
+        print("ImageBinInfo (image_id, qvec, tvec, camera_id, image_name, xys, point3D_ids):" + str(
+            (image_id, qvec, tvec, camera_id, image_name, xys, point3D_ids)) + " FIN")
+        return json.dumps((image_id, qvec, tvec, camera_id, image_name, xys, point3D_ids), cls=Utils.NDArrayEncoder)
+
+
 ## Actually setup the Api resource routing here
 ##
 # api.add_resource(TodoList, '/todos')
@@ -203,6 +237,8 @@ api.add_resource(StartMapConstruction, '/capture-photo/construct')
 api.add_resource(ClearWorkspace, '/capture-photo/clear')
 api.add_resource(QueryLocal, '/capture-photo/querylocal')
 api.add_resource(CVQueryLocal, '/capture-photo/cvquerylocal')
+api.add_resource(ImageBinInfo, '/capture-photo/imagebininfo')
+api.add_resource(Query3DCouldPoint, '/capture-photo/query3dcloudpoint')
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5444, debug=True)

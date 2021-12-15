@@ -5,7 +5,7 @@ import cv2
 import time
 import os
 from map3d.util.calc import get_point_feature
-from map3d.util.calc import get_point_pos_des
+
 from map3d.util.db import database
 from scipy.spatial.transform import Rotation as R
 from map3d.util import Utils
@@ -49,11 +49,7 @@ def compare_upload_base_local(base_bank_dir,
     # read the feture of database of images dataware
     # db_points_pos, db_points_rgb, db_points_des = get_point_pos_des.get_points_pos_des(
     #     base_images_db_path)
-    db_cameras, db_images, db_points = get_point_feature.read_cip(base_bank_dir)
-    db_images_table, db_kp_table, db_des_table = get_point_feature.read_database(base_bank_dir)
-    db_points_pos, db_points_des, dp_points_rgb = get_point_feature.get_points_pos_des(db_cameras, db_images, db_points,
-                                                                                       db_kp_table, db_des_table)
-
+    (db_points_pos, db_points_des, dp_points_rgb) = Utils.load_all_3dmap_cloud_point(base_bank_dir)
     (query_kp, query_des, params) = get_upload_image_dbinfo(
         upload_database_file_full_path)
 
@@ -155,10 +151,10 @@ def establish_env(image_name, sparse_dir, base_database_name, bank):
     sparse_dir_bank = sparse_dir + str(bank) + "/"
     upload_image_tmp_dir = sparse_dir_bank + "upload_temp/"
     # the upload image file full path
-    upload_image_file_full_path = upload_image_tmp_dir + image_name + ".jpg"
+    upload_image_file_full_path = upload_image_tmp_dir + image_name_prefix + ".jpg"
     # the upload image's feature database file full path
-    upload_database_file_full_path = upload_image_tmp_dir + image_name + ".db"
+    upload_database_file_full_path = upload_image_tmp_dir + image_name_prefix + ".db"
     return (
-        image_name, upload_image_file_full_path, upload_database_file_full_path,
+        image_name_prefix, upload_image_file_full_path, upload_database_file_full_path,
         upload_image_tmp_dir,
         sparse_dir_bank)
