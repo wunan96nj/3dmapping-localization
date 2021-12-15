@@ -1,5 +1,5 @@
 
-![](/Users/akui/Desktop/cloudpoint.png)
+![](cloudpoint.png)
 # **About:**
 
 Restfull 3D Map Service API
