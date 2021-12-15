@@ -9,7 +9,7 @@ api = Api(app)
 
 captures = {
     'capture1': {'task': 'build an API'},
-    'capture2': {'task': '哈哈哈'},
+    'capture2': {'task': '哈哈哈11'},
     'capture3': {'task': 'profit!'},
 }
 
