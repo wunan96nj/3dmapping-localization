@@ -16,7 +16,7 @@ api = Api(app)
 parser = reqparse.RequestParser()
 parser.add_argument('task', type=str)
 
-COLMAP = "/Users/akui/eclipse-workspace/py-colmap-rest-gate/map3d/COLMAP.app/Contents/MacOS/colmap"
+COLMAP = "/Users/akui/eclipse-workspace/py-3dmap-rest-gate/map3d/COLMAP.app/Contents/MacOS/colmap"
 workspace_dir = "/Users/akui/Desktop" + "/"
 image_base_dir = workspace_dir + "images/"
 image_bin_name = "images.bin"

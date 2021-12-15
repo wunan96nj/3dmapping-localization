@@ -5,9 +5,7 @@ import base64
 import os
 from PIL import Image
 from datetime import datetime
-import numpy
 from map3d.util import Utils
-from map3d.util.calc import read_model
 
 
 def find_photos_filenames(full_dir_path, isPng=False):
