@@ -195,21 +195,6 @@ class CVQueryLocal(Resource):
     ##
 
 
-class Query3DCouldPoint(Resource):
-    def post(self):
-        print("Query3DCouldPoint BEGIN, ")
-        json_data = request.get_json(force=True)
-        bank = json_data['bank']
-        params = json_data['params']
-        #
-        sparse_dir_bank = sparse_dir + str(bank) + "/"
-        print("Query3DCouldPoint sparse_dir_bank: " + sparse_dir_bank)
-        (db_points_pos, db_points_des, dp_points_rgb) = Utils.load_all_3dmap_cloud_point(sparse_dir_bank)
-        print("Query3DCouldPoint (db_points_pos, db_points_des, dp_points_rgb):" + str(
-            (db_points_pos, db_points_des, dp_points_rgb)) + " FIN")
-        return json.dumps((db_points_pos, db_points_des, dp_points_rgb), cls=Utils.NDArrayEncoder)
-
-
 class ImageBinInfo(Resource):
     def post(self):
         print("ImageBinInfo BEGIN, ")
@@ -225,6 +210,21 @@ class ImageBinInfo(Resource):
         print("ImageBinInfo (image_id, qvec, tvec, camera_id, image_name, xys, point3D_ids):" + str(
             (image_id, qvec, tvec, camera_id, image_name, xys, point3D_ids)) + " FIN")
         return json.dumps((image_id, qvec, tvec, camera_id, image_name, xys, point3D_ids), cls=Utils.NDArrayEncoder)
+
+
+class Query3DCouldPoint(Resource):
+    def post(self):
+        print("Query3DCouldPoint BEGIN, ")
+        json_data = request.get_json(force=True)
+        bank = json_data['bank']
+        params = json_data['params']
+        #
+        sparse_dir_bank = sparse_dir + str(bank) + "/"
+        print("Query3DCouldPoint sparse_dir_bank: " + sparse_dir_bank)
+        (db_points_pos, db_points_des, dp_points_rgb) = Utils.load_all_3dmap_cloud_point(sparse_dir_bank)
+        print("Query3DCouldPoint (db_points_pos, db_points_des, dp_points_rgb):" + str(
+            (db_points_pos, db_points_des, dp_points_rgb)) + " FIN")
+        return json.dumps((db_points_pos, db_points_des, dp_points_rgb), cls=Utils.NDArrayEncoder)
 
 
 ## Actually setup the Api resource routing here

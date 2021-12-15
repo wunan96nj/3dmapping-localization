@@ -23,6 +23,7 @@ class NDArrayEncoder(JSONEncoder):
 def write_xyz_to_point_cloud_file(db_points_pos, db_points_des, dp_points_rgb, ply_file_path):
     pcd = open3d.geometry.PointCloud()
     pcd.points = open3d.utility.Vector3dVector(db_points_pos)
+    dp_points_rgb = numpy.array(dp_points_rgb)
     pcd.colors = open3d.utility.Vector3dVector(dp_points_rgb.astype(numpy.float64) / 255.0)
     open3d.io.write_point_cloud(ply_file_path, pcd)
     return
@@ -140,6 +141,7 @@ def printImageBinInfo(uploadImagePath, image_bin_path="/Users/akui/Desktop/spars
     return (image_id, qvec, tvec,
             camera_id, image_name,
             xys, point3D_ids)
+
 
 '''
 def gen_newdb(sparse_dir, database_name, feature_dim, bank, self):

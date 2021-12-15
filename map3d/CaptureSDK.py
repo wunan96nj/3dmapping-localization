@@ -123,7 +123,7 @@ def Query3DCouldPoint(url, token, bank, params=None):
     return return_obj
 
 
-def Write3dmapPointCloudPlyFile(db_points_pos, db_points_des, dp_points_rgb, ply_file_path):
+def Write3dmap2PlyFile(db_points_pos, db_points_des, dp_points_rgb, ply_file_path):
     Utils.write_xyz_to_point_cloud_file(db_points_pos, db_points_des, dp_points_rgb, ply_file_path)
     return
 
