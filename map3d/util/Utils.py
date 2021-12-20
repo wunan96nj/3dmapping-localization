@@ -29,9 +29,9 @@ def write_xyz_to_point_cloud_file(db_points_pos, db_points_des, dp_points_rgb, p
     return
 
 
-def load_all_3dmap_cloud_point(base_bank_dir):
-    db_cameras, db_images, db_points = get_point_feature.read_cip(base_bank_dir)
-    db_images_table, db_kp_table, db_des_table = get_point_feature.read_database(base_bank_dir)
+def load_all_3dmap_cloud_point(sparse_dir, col_bin_dir):
+    db_cameras, db_images, db_points = get_point_feature.read_cip(col_bin_dir)
+    db_images_table, db_kp_table, db_des_table = get_point_feature.read_database(sparse_dir)
     db_points_pos, db_points_des, dp_points_rgb = get_point_feature.get_points_pos_des(db_cameras, db_images, db_points,
                                                                                        db_kp_table, db_des_table)
     return (db_points_pos, db_points_des, dp_points_rgb)
@@ -51,22 +51,6 @@ def write_to_file(content_s, file_full_path, is_base64, self):
     with open(file_full_path, 'wb') as f:
         f.write(file_bytes)
     return
-
-
-def create_image_db_env(image_base_dir, sparse_dir, bank, self):
-    image_dir = image_base_dir + str(bank) + "/"
-    sparse_dir_bank = sparse_dir + str(bank) + "/"
-    database_dir = sparse_dir_bank
-    print("image_dir: " + image_dir)
-    print("sparse_dir_bank: " + sparse_dir_bank)
-    print("database_dir: " + database_dir)
-    if not os.path.exists(sparse_dir):
-        os.mkdir(sparse_dir)
-    if not os.path.exists(sparse_dir_bank):
-        os.mkdir(sparse_dir_bank)
-    if not os.path.exists(database_dir):
-        os.mkdir(database_dir)
-    return (database_dir, image_dir)
 
 
 def feature_cv(database_path, img_folder, ):
@@ -135,12 +119,12 @@ def point_triangulator_colmap(COLMAP, database_name, sparse_dir,
     pIntrisics.wait()
 
 
-def printImageBinInfo(uploadImagePath, image_bin_path="/Users/akui/Desktop/sparse/0/images.bin"):
-    (image_dir, the_image_name) = os.path.split(uploadImagePath)
-
-    return (image_id, qvec, tvec,
-            camera_id, image_name,
-            xys, point3D_ids)
+# def printImageBinInfo(uploadImagePath, image_bin_path="/Users/akui/Desktop/sparse/0/images.bin"):
+#     (image_dir, the_image_name) = os.path.split(uploadImagePath)
+#
+#     return (image_id, qvec, tvec,
+#             camera_id, image_name,
+#             xys, point3D_ids)
 
 
 '''

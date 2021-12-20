@@ -7,7 +7,7 @@ import json
 from flask import Flask, jsonify, request
 from flask_restful import reqparse, Api, Resource
 import os
-from map3d.util import QueryLocalUtil, Utils
+from map3d.util import QueryLocalUtil, Utils, Env
 from map3d.util.calc import read_model
 
 app = Flask(__name__)
@@ -17,11 +17,9 @@ parser = reqparse.RequestParser()
 parser.add_argument('task', type=str)
 
 COLMAP = "/Users/akui/eclipse-workspace/py-3dmap-rest-gate/map3d/COLMAP.app/Contents/MacOS/colmap"
-workspace_dir = "/Users/akui/Desktop" + "/"
-image_base_dir = workspace_dir + "images/"
+root_dir = "/Users/akui/Desktop/"
+
 image_bin_name = "images.bin"
-json_base_dir = workspace_dir + "json/"
-sparse_dir = workspace_dir + 'sparse/'
 database_name = 'database.db'
 
 
@@ -61,20 +59,11 @@ class CapturePhoto(Resource):
         image_name = json_data['image_name']
         image_name = image_name.split('.')[0]
         b64 = json_data['b64']
-        if not os.path.exists(image_base_dir):
-            os.mkdir(image_base_dir)
-        if not os.path.exists(json_base_dir):
-            os.mkdir(json_base_dir)
-        if not os.path.exists(image_base_dir + str(bank)):
-            os.mkdir(image_base_dir + str(bank))
-        if not os.path.exists(json_base_dir + str(bank)):
-            os.mkdir(json_base_dir + str(bank))
-        jpg_file_full_path = image_base_dir + str(
-            bank) + "/" + image_name + ".jpg"
-        json_file_path = json_base_dir + str(
-            bank) + "/" + image_name + ".json"
-        print("write image file to " + jpg_file_full_path)
-        print("write json file to " + json_file_path)
+        (workspace_dir, image_base_dir, json_base_dir, sparse_dir, database_dir, col_bin_dir) = Env.get_env_total_dir(
+            root_dir, bank,
+            self)
+        (jpg_file_full_path, json_file_path) = Env.get_jpg_json_file_path(image_base_dir, json_base_dir, image_name,
+                                                                          self)
         CapturePhoto.save_files(json_data, jpg_file_full_path, json_file_path,
                                 self)
         return jsonify(image_name=image_name,
@@ -98,17 +87,18 @@ class StartMapConstruction(Resource):
 
     def build(feature_dim, bank, self):
         print("StartMapConstruction build() start.....")
-        (database_dir, image_dir) = Utils.create_image_db_env(
-            image_base_dir, sparse_dir, bank, self)
+        (workspace_dir, image_base_dir, json_base_dir, sparse_dir, database_dir, col_bin_dir) = Env.get_env_total_dir(
+            root_dir, bank,
+            self)
         print("1. feature_extractor")
-        Utils.feature_colmap(COLMAP, database_name, database_dir, image_dir,
+        Utils.feature_colmap(COLMAP, database_name, database_dir, image_base_dir,
                              self)
         # Utils.feature_cv(tmp_database_dir + database_name, image_dir)
         print("2. Matching")
-        Utils.match_colmap(COLMAP, database_name, database_dir, image_dir, self)
+        Utils.match_colmap(COLMAP, database_name, database_dir, image_base_dir, self)
 
         print("3. point_triangulator")
-        Utils.point_triangulator_colmap(COLMAP, database_name, sparse_dir, database_dir, image_dir, self)
+        Utils.point_triangulator_colmap(COLMAP, database_name, sparse_dir, database_dir, image_base_dir, self)
         print("StartMapConstruction build() end .....")
         return
 
@@ -118,6 +108,9 @@ class ClearWorkspace(Resource):
         print("ClearWorkspace BEGIN, ")
         json_data = request.get_json(force=True)
         bank = json_data['bank']
+        (workspace_dir, image_base_dir, json_base_dir, sparse_dir, database_dir, col_bin_dir) = Env.get_env_total_dir(
+            root_dir,
+            bank, self)
         image_dir = image_base_dir + str(bank) + "/"
         json_dir = json_base_dir + str(bank) + "/"
         sparse_dir_bank = sparse_dir + str(bank) + "/"
@@ -137,14 +130,15 @@ class QueryLocal(Resource):
         bank = json_data['bank']
         b64 = json_data['b64']
         image_name = json_data['image_name']
+        (workspace_dir, image_base_dir, json_base_dir, sparse_dir, database_dir, col_bin_dir) = Env.get_env_total_dir(
+            root_dir, bank,
+            self)
         (
             image_name_prefix, upload_image_file_full_path,
             upload_database_file_full_path,
-            upload_image_tmp_dir,
-            sparse_dir_bank) = QueryLocalUtil.establish_env(image_name,
-                                                            sparse_dir,
-                                                            database_name,
-                                                            bank)
+            upload_image_tmp_dir) = Env.establish_env(image_name,
+                                                      sparse_dir,
+                                                      self)
         print("QueryLocal image_name_prefix: " + image_name_prefix)
         print(
             "QueryLocal upload_image_file_full_path: " + upload_image_file_full_path)
@@ -157,7 +151,8 @@ class QueryLocal(Resource):
         QueryLocalUtil.get_feature_upload(COLMAP, image_name_prefix + ".db",
                                           upload_image_tmp_dir, self)
         (image_name_jpg, q, t) = QueryLocalUtil.compare_upload_base_local(
-            sparse_dir_bank,
+            sparse_dir,
+            col_bin_dir,
             upload_database_file_full_path,
             image_name_prefix + ".jpg",
             self)
@@ -182,12 +177,15 @@ class CVQueryLocal(Resource):
         fg_des = numpy.array(fg_des).astype(numpy.uint8)
         params = numpy.array(params)
         #
-        sparse_dir_bank = sparse_dir + str(bank) + "/"
+        (workspace_dir, image_base_dir, json_base_dir, sparse_dir, database_dir, col_bin_dir) = Env.get_env_total_dir(
+            root_dir, bank,
+            self)
+
         print("CVQueryLocal image_name_jpg: " + image_name_jpg)
-        print("CVQueryLocal sparse_dir_bank: " + sparse_dir_bank)
-        (image_name_jpg, q, t) = QueryLocalUtil.compare_upload_base_local_cv(
-            sparse_dir_bank, image_name_jpg, fg_kp,
-            fg_des, params, self)
+        print("CVQueryLocal sparse_dir_bank: " + sparse_dir)
+        (image_name_jpg, q, t) = QueryLocalUtil.compare_upload_base_local_cv(sparse_dir, col_bin_dir, image_name_jpg,
+                                                                             fg_kp,
+                                                                             fg_des, params, self)
         print("CVQueryLocal (image_name_jpg, q, t):" + str(
             (image_name_jpg, q, t)) + " FIN")
         return json.dumps((image_name_jpg, q, t), cls=Utils.NDArrayEncoder)
@@ -201,8 +199,10 @@ class ImageBinInfo(Resource):
         json_data = request.get_json(force=True)
         bank = json_data['bank']
         the_image_name = json_data['image_name']
-        sparse_dir_bank = sparse_dir + str(bank) + "/"
-        image_bin_path = sparse_dir_bank + image_bin_name
+        (workspace_dir, image_base_dir, json_base_dir, sparse_dir, database_dir, col_bin_dir) = Env.get_env_total_dir(
+            root_dir, bank,
+            self)
+        image_bin_path = Env.image_bin_path(sparse_dir, image_bin_name, self)
         (image_id, qvec, tvec,
          camera_id, image_name,
          xys, point3D_ids) = read_model.read_images_binary_for_one(image_bin_path,
@@ -219,9 +219,11 @@ class Query3DCouldPoint(Resource):
         bank = json_data['bank']
         params = json_data['params']
         #
-        sparse_dir_bank = sparse_dir + str(bank) + "/"
-        print("Query3DCouldPoint sparse_dir_bank: " + sparse_dir_bank)
-        (db_points_pos, db_points_des, dp_points_rgb) = Utils.load_all_3dmap_cloud_point(sparse_dir_bank)
+        (workspace_dir, image_base_dir, json_base_dir, sparse_dir, database_dir, col_bin_dir) = Env.get_env_total_dir(
+            root_dir, bank,
+            self)
+        print("Query3DCouldPoint sparse_dir: " + sparse_dir)
+        (db_points_pos, db_points_des, dp_points_rgb) = Utils.load_all_3dmap_cloud_point(sparse_dir, col_bin_dir)
         print("Query3DCouldPoint (db_points_pos, db_points_des, dp_points_rgb):" + str(
             (db_points_pos, db_points_des, dp_points_rgb)) + " FIN")
         return json.dumps((db_points_pos, db_points_des, dp_points_rgb), cls=Utils.NDArrayEncoder)

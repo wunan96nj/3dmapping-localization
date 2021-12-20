@@ -13,11 +13,11 @@ def main_test():
     map_name = "pyFirstMap"
     windowSize = 0
     deleteAnchorImage = True
-    bank = 0
+    bank = 2
     # feature_dim: colmap use 6, cv use 2
     feature_dim = 6
     uploadImagePath = "/Users/akui/Desktop/south-building/images/P1180141.jpg"
-    cloudPlyFile="/Users/akui/Desktop/cloudPlyFile.ply"
+    cloudPlyFile = "/Users/akui/Desktop/cloudPlyFile.ply"
 
     print("post_to_server---------------BEGIN")
     print("ClearWorkspace...start...")
@@ -75,7 +75,7 @@ def main_test():
 
     print("Query3DCouldPoint to file ---------------BEGIN")
     (db_points_pos, db_points_des, dp_points_rgb) = CaptureSDK.Query3DCouldPoint(api_url, token, bank)
-    print(db_points_pos, db_points_des, dp_points_rgb)
+    # print(db_points_pos, db_points_des, dp_points_rgb)
     CaptureSDK.Write3dmap2PlyFile(db_points_pos, db_points_des, dp_points_rgb, cloudPlyFile)
     print("Query3DCouldPoint---------------END")
     return

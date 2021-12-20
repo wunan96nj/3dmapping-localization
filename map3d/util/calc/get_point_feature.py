@@ -1,4 +1,3 @@
-
 import os
 import numpy as np
 from map3d.util.db import database
@@ -6,11 +5,10 @@ from map3d.util.db import nw_database
 from map3d.util.calc import read_write_model
 
 
-
-def read_cip(file_path):
-    cameras_bin = os.path.join(file_path, "cameras.bin")
-    images_bin = os.path.join(file_path, "images.bin")
-    points_bin = os.path.join(file_path, "points3D.bin")
+def read_cip(col_bin_dir):
+    cameras_bin = os.path.join(col_bin_dir, "cameras.bin")
+    images_bin = os.path.join(col_bin_dir, "images.bin")
+    points_bin = os.path.join(col_bin_dir, "points3D.bin")
 
     cameras = read_write_model.read_cameras_binary(cameras_bin)
     images = read_write_model.read_images_binary(images_bin)
