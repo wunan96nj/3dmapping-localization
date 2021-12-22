@@ -29,7 +29,7 @@ def get_env_total_dir(root_dir, bank):
     return (workspace_dir, image_base_dir, json_base_dir, sparse_dir, database_dir, col_bin_dir)
 
 
-def get_jpg_json_file_path(image_base_dir, json_base_dir, image_name, self):
+def get_jpg_json_file_path(image_base_dir, json_base_dir, image_name):
     jpg_file_full_path = image_base_dir + image_name + ".jpg"
     json_file_path = json_base_dir + image_name + ".json"
     print("write image file to " + jpg_file_full_path)
@@ -42,7 +42,7 @@ def image_bin_path(sparse_dir, image_bin_name):
     return sparse_dir + "0/" + image_bin_name
 
 
-def establish_env(image_name, sparse_dir, self):
+def establish_env(image_name, sparse_dir):
     image_name_prefix = image_name.split('.')[0]
     # sparse include bank info like "/Users/akui/Desktop/sparse-0"
     upload_image_tmp_dir = sparse_dir + "upload_temp/"

@@ -11,18 +11,16 @@ from scipy.spatial.transform import Rotation as R
 from map3d.util import Utils
 
 
-def save_image(b64, bank, upload_image_tmp_dir, upload_image_file_full_path,
-               self):
+def save_image(b64, bank, upload_image_tmp_dir, upload_image_file_full_path):
     print("QueryLocal save_image() start .....")
     if not os.path.exists(upload_image_tmp_dir):
         os.mkdir(upload_image_tmp_dir)
     print("write image file to " + upload_image_file_full_path)
-    Utils.write_to_file(b64, upload_image_file_full_path, True, self)
+    Utils.write_to_file(b64, upload_image_file_full_path, True)
     return
 
 
-def get_feature_upload(COLMAP, database_name, upload_image_tmp_dir,
-                       self):
+def get_feature_upload(COLMAP, database_name, upload_image_tmp_dir):
     print("QueryLocal get_feature_upload() start .....")
     print(
         "QueryLocal get_feature_upload() database_name: " + database_name)
@@ -30,15 +28,14 @@ def get_feature_upload(COLMAP, database_name, upload_image_tmp_dir,
         "QueryLocal get_feature_upload() upload_image_tmp_dir: " + upload_image_tmp_dir)
     print("1. feature_extractor")
     Utils.feature_colmap(COLMAP, database_name, upload_image_tmp_dir,
-                         upload_image_tmp_dir, self)
+                         upload_image_tmp_dir)
     return
 
 
 # db of upload image, db of total image bank
 def compare_upload_base_local(sparse_dir, col_bin_dir,
                               upload_database_file_full_path,
-                              image_name_jpg,
-                              self):
+                              image_name_jpg):
     print("QueryLocal query_local() start .....")
     print(
         "QueryLocal query_local() col_bin_dir: " + col_bin_dir)

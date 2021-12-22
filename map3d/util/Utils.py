@@ -42,7 +42,7 @@ def correct_colmap_q(qvec):
     return ret
 
 
-def write_to_file(content_s, file_full_path, is_base64, self):
+def write_to_file(content_s, file_full_path, is_base64):
     if is_base64:
         base64_bytes = content_s.encode('ascii')
         file_bytes = base64.b64decode(base64_bytes)
@@ -93,7 +93,7 @@ def feature_one_image_cv(img_name, img_folder):
     return (fg_kp, fg_des)
 
 
-def feature_colmap(COLMAP, database_name, tmp_database_dir, image_dir, self):
+def feature_colmap(COLMAP, database_name, tmp_database_dir, image_dir):
     pIntrisics = subprocess.Popen(
         [COLMAP, "feature_extractor", "--database_path",
          tmp_database_dir + database_name, "--image_path", image_dir,
@@ -101,7 +101,7 @@ def feature_colmap(COLMAP, database_name, tmp_database_dir, image_dir, self):
     pIntrisics.wait()
 
 
-def match_colmap(COLMAP, database_name, tmp_database_dir, image_dir, self):
+def match_colmap(COLMAP, database_name, tmp_database_dir, image_dir ):
     pIntrisics = subprocess.Popen(
         [COLMAP, "exhaustive_matcher", "--database_path",
          tmp_database_dir + database_name])
@@ -109,7 +109,7 @@ def match_colmap(COLMAP, database_name, tmp_database_dir, image_dir, self):
 
 
 def point_triangulator_colmap(COLMAP, database_name, sparse_dir,
-                              tmp_database_dir, image_dir, self):
+                              tmp_database_dir, image_dir ):
     pIntrisics = subprocess.Popen(
         [COLMAP, "mapper", "--database_path",
          tmp_database_dir + database_name,
@@ -128,7 +128,7 @@ def point_triangulator_colmap(COLMAP, database_name, sparse_dir,
 
 
 '''
-def gen_newdb(sparse_dir, database_name, feature_dim, bank, self):
+def gen_newdb(sparse_dir, database_name, feature_dim, bank ):
     print("StartMapConstruction gen_newdb() start .....")
     sparse_dir_bank = sparse_dir + str(bank) + "/"
     tmp_database_dir = sparse_dir_bank + "/temp/"
@@ -162,7 +162,7 @@ def gen_newdb(sparse_dir, database_name, feature_dim, bank, self):
     return
 '''
 '''
-def remove_build_useless_files(sparse_dir, feature_dim, bank, self):
+def remove_build_useless_files(sparse_dir, feature_dim, bank ):
     print("StartMapConstruction remove_useless_files() start .....")
     sparse_dir_bank = sparse_dir + str(bank) + "/"
     tmp_database_dir = sparse_dir_bank + "temp/"
