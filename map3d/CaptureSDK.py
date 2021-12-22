@@ -37,17 +37,17 @@ def ConvertToBase64(src_filepath):
         return b64_encoded_img
 
 
-def post_to_server(api_url, token, image_base_dir, seq_base, bank):
+def post_to_server(api_url, token, image_base_dir, seq_base, bank, username, password):
     for i, imagePath in enumerate(find_photos_filenames(image_base_dir)):
         seq = seq_base + i
         print("sequence: " + str(seq))
         print("imagePath: " + imagePath)
         print("bank: " + str(bank))
-        submit_image(api_url, token, imagePath, seq, bank);
+        submit_image(api_url, token, imagePath, seq, bank, username, password);
     return
 
 
-def submit_image(api_url, token, imagePath, seq, bank):
+def submit_image(api_url, token, imagePath, seq, bank, username, password):
     print("submit_image...start...")
     complete_url = api_url + '/captureb64'
     (image_dir, image_name) = os.path.split(imagePath)
@@ -82,13 +82,13 @@ def submit_image(api_url, token, imagePath, seq, bank):
 
     json_data = json.dumps(data)
     # print(json_data)
-    ret = requests.post(complete_url, data=json_data).json()
+    ret = requests.post(complete_url, data=json_data, auth=(username, password)).json()
     print(ret)
     print("submit_image...end...")
     return
 
 
-def StartMapConstruction(url, token, mapName, windowSize, feature_dim, bank):
+def StartMapConstruction(url, token, mapName, windowSize, feature_dim, bank, username, password):
     complete_url = url + '/construct'
     data = {
         "token": token,
@@ -102,11 +102,11 @@ def StartMapConstruction(url, token, mapName, windowSize, feature_dim, bank):
         "window_size": windowSize
     }
     json_data = json.dumps(data)
-    ret = requests.post(complete_url, data=json_data).json()
+    ret = requests.post(complete_url, data=json_data, auth=(username, password)).json()
     return ret
 
 
-def Query3DCouldPoint(url, token, bank, params=None):
+def Query3DCouldPoint(url, token, bank, username, password, params=None):
     t_beign = time.time()
     print("QueryLocal...start...t_beign: " + str(int(t_beign)))
     print("QueryLocal...bank: " + str(bank))
@@ -117,7 +117,7 @@ def Query3DCouldPoint(url, token, bank, params=None):
         "params": params
     }
     json_data = json.dumps(data)
-    return_obj = json.loads(requests.post(complete_url, data=json_data).json())
+    return_obj = json.loads(requests.post(complete_url, data=json_data, auth=(username, password)).json())
     return return_obj
 
 
@@ -126,7 +126,7 @@ def Write3dmap2PlyFile(db_points_pos, db_points_des, dp_points_rgb, ply_file_pat
     return
 
 
-def QueryLocal(url, token, uploadImagePath, bank):
+def QueryLocal(url, token, uploadImagePath, bank, username, password):
     complete_url = url + '/querylocal'
     (image_dir, image_name) = os.path.split(uploadImagePath)
     image_name = image_name.split('.')[0] + ".jpg"
@@ -137,7 +137,7 @@ def QueryLocal(url, token, uploadImagePath, bank):
         "image_name": image_name
     }
     json_data = json.dumps(data)
-    return_obj = json.loads(requests.post(complete_url, data=json_data).json())
+    return_obj = json.loads(requests.post(complete_url, data=json_data, auth=(username, password)).json())
     print(return_obj)
     ret_image_name = return_obj[0]
     ret_qvec = return_obj[1]
@@ -145,7 +145,7 @@ def QueryLocal(url, token, uploadImagePath, bank):
     return (ret_image_name, ret_qvec, ret_tvec)
 
 
-def CVQueryLocal(url, token, cvImagePath, bank):
+def CVQueryLocal(url, token, cvImagePath, bank, username, password):
     t_beign = time.time()
     print("CVQueryLocal...start...t_beign: " + str(int(t_beign)))
     print("CVQueryLocal...cvImagePath: " + str(cvImagePath))
@@ -166,7 +166,7 @@ def CVQueryLocal(url, token, cvImagePath, bank):
         "image_name": image_name
     }
     json_data = json.dumps(data, cls=Utils.NDArrayEncoder)
-    return_obj = json.loads(requests.post(complete_url, data=json_data).json())
+    return_obj = json.loads(requests.post(complete_url, data=json_data, auth=(username, password)).json())
     print(return_obj)
     ret_image_name = return_obj[0]
     ret_qvec = return_obj[1]
@@ -174,7 +174,7 @@ def CVQueryLocal(url, token, cvImagePath, bank):
     return (ret_image_name, ret_qvec, ret_tvec)
 
 
-def ImageBinInfo(url, token, image_name, bank):
+def ImageBinInfo(url, token, image_name, bank, username, password):
     # image_name = image_name.split('.')[0]
     print("ImageBinInfo...bank: " + str(bank))
     print("ImageBinInfo...image_name: " + str(image_name))
@@ -185,11 +185,11 @@ def ImageBinInfo(url, token, image_name, bank):
         "image_name": image_name
     }
     json_data = json.dumps(data, cls=Utils.NDArrayEncoder)
-    return_obj = json.loads(requests.post(complete_url, data=json_data).json())
+    return_obj = json.loads(requests.post(complete_url, data=json_data, auth=(username, password)).json())
     return return_obj
 
 
-def ClearWorkspace(url, token, deleteAnchorImage, bank):
+def ClearWorkspace(url, token, deleteAnchorImage, bank, username, password):
     complete_url = url + '/clear'
     data = {
         "token": token,
@@ -197,7 +197,7 @@ def ClearWorkspace(url, token, deleteAnchorImage, bank):
         "anchor": deleteAnchorImage
     }
     json_data = json.dumps(data)
-    r = requests.post(complete_url, data=json_data)
+    r = requests.post(complete_url, data=json_data, auth=(username, password))
     return r
 
 

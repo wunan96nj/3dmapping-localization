@@ -214,8 +214,9 @@ def ImageBinInfo():
         json.dumps((image_id, qvec, tvec, camera_id, image_name, xys, point3D_ids), cls=Utils.NDArrayEncoder))
 
 
-# @auth.login_required
+
 @app.route('/capture-photo/query3dcloudpoint', methods=['GET', 'POST'])
+@auth.login_required
 def Query3DCouldPoint():
     print("Query3DCouldPoint BEGIN, ")
     json_data = request.get_json(force=True)
