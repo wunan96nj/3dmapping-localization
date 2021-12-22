@@ -12,20 +12,9 @@ from map3d.util.calc import read_model
 from environs import Env
 from flask_httpauth import HTTPBasicAuth
 
-
 app = Flask(__name__)
 api = Api(app)
-
-parser = reqparse.RequestParser()
-parser.add_argument('task', type=str)
-
-
-
-
-
 auth = HTTPBasicAuth()
-
-
 
 env = Env()
 env.read_env(path='server.env')
@@ -47,6 +36,7 @@ def init():
 
 
 @app.route('/capture-photo/captureb64', methods=['GET', 'POST'])
+@auth.login_required
 def CapturePhoto():
     # file_uuid = uuid.uuid4().hex;
     json_data = request.get_json(force=True)
@@ -93,6 +83,7 @@ def CapturePhoto_save_files(json_data, image_file_full_path, json_file_full_path
 
 # construction by images
 @app.route('/capture-photo/construct', methods=['GET', 'POST'])
+@auth.login_required
 def StartMapConstruction():
     print("StartMapConstruction BEGIN")
     json_data = request.get_json(force=True)
@@ -122,6 +113,7 @@ def StartMapConstruction_build(feature_dim, bank):
 
 
 @app.route('/capture-photo/clear', methods=['GET', 'POST'])
+@auth.login_required
 def ClearWorkspace():
     print("ClearWorkspace BEGIN, ")
     json_data = request.get_json(force=True)
@@ -143,6 +135,7 @@ def ClearWorkspace():
 
 
 @app.route('/capture-photo/querylocal', methods=['GET', 'POST'])
+@auth.login_required
 def QueryLocal():
     print("QueryLocal BEGIN, ")
     json_data = request.get_json(force=True)
@@ -155,7 +148,7 @@ def QueryLocal():
         image_name_prefix, upload_image_file_full_path,
         upload_database_file_full_path,
         upload_image_tmp_dir) = MyEnv.establish_env(image_name,
-                                                  sparse_dir)
+                                                    sparse_dir)
     print("QueryLocal image_name_prefix: " + image_name_prefix)
     print(
         "QueryLocal upload_image_file_full_path: " + upload_image_file_full_path)
@@ -179,6 +172,7 @@ def QueryLocal():
 
 
 @app.route('/capture-photo/cvquerylocal', methods=['GET', 'POST'])
+@auth.login_required
 def CVQueryLocal():
     print("CVQueryLocal BEGIN, ")
     json_data = request.get_json(force=True)
@@ -208,6 +202,7 @@ def CVQueryLocal():
 
 
 @app.route('/capture-photo/imagebininfo', methods=['GET', 'POST'])
+@auth.login_required
 def ImageBinInfo():
     print("ImageBinInfo BEGIN, ")
     json_data = request.get_json(force=True)
