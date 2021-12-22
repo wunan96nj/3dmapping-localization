@@ -3,7 +3,7 @@
 import os
 
 
-def get_env_total_dir(root_dir, bank, self):
+def get_env_total_dir(root_dir, bank):
     workspace_dir = root_dir + "workspace-" + str(bank) + "/"
     image_base_dir = workspace_dir + "images/"
     json_base_dir = workspace_dir + "json/"
@@ -37,7 +37,7 @@ def get_jpg_json_file_path(image_base_dir, json_base_dir, image_name, self):
     return (jpg_file_full_path, json_file_path)
 
 
-def image_bin_path(sparse_dir, image_bin_name, self):
+def image_bin_path(sparse_dir, image_bin_name):
     # colmap will use 0 as bin files' father director,
     return sparse_dir + "0/" + image_bin_name
 

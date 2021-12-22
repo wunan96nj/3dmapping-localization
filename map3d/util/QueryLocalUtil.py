@@ -67,7 +67,7 @@ def compare_upload_base_local(sparse_dir, col_bin_dir,
 
 # cv feature, db of total image bank
 def compare_upload_base_local_cv(sparse_dir, col_bin_dir, image_name_jpg, fg_kp,
-                                 fg_des, params, self):
+                                 fg_des, params):
     db_cameras, db_images, db_points = get_point_feature.read_cip(col_bin_dir)
     db_images_table, db_kp_table, db_des_table = get_point_feature.read_database(sparse_dir)
     db_points_pos, db_points_des, dp_points_rgb = get_point_feature.get_points_pos_des(db_cameras, db_images, db_points,

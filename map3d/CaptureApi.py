@@ -22,6 +22,17 @@ root_dir = "/Users/akui/Desktop/"
 image_bin_name = "images.bin"
 database_name = 'database.db'
 
+from flask_httpauth import HTTPBasicAuth
+
+auth = HTTPBasicAuth()
+
+
+@auth.verify_password
+def verify_password(username, password):
+    if username == 'user' and password == 'pass':
+        return True
+    return False
+
 
 class CapturePhoto(Resource):
 
@@ -163,70 +174,69 @@ class QueryLocal(Resource):
     ##
 
 
-class CVQueryLocal(Resource):
-    def post(self):
-        print("CVQueryLocal BEGIN, ")
-        json_data = request.get_json(force=True)
-        bank = json_data['bank']
-        fg_des = json_data['fg_des']
-        fg_kp = json_data['fg_kp']
-        params = json_data['params']
-        image_name_jpg = json_data['image_name']
+@app.route('/capture-photo/cvquerylocal', methods=['GET', 'POST'])
+def CVQueryLocal():
+    print("CVQueryLocal BEGIN, ")
+    json_data = request.get_json(force=True)
+    bank = json_data['bank']
+    fg_des = json_data['fg_des']
+    fg_kp = json_data['fg_kp']
+    params = json_data['params']
+    image_name_jpg = json_data['image_name']
 
-        fg_kp = numpy.array(fg_kp)
-        fg_des = numpy.array(fg_des).astype(numpy.uint8)
-        params = numpy.array(params)
-        #
-        (workspace_dir, image_base_dir, json_base_dir, sparse_dir, database_dir, col_bin_dir) = Env.get_env_total_dir(
-            root_dir, bank,
-            self)
+    fg_kp = numpy.array(fg_kp)
+    fg_des = numpy.array(fg_des).astype(numpy.uint8)
+    params = numpy.array(params)
+    #
+    (workspace_dir, image_base_dir, json_base_dir, sparse_dir, database_dir, col_bin_dir) = Env.get_env_total_dir(
+        root_dir, bank)
 
-        print("CVQueryLocal image_name_jpg: " + image_name_jpg)
-        print("CVQueryLocal sparse_dir_bank: " + sparse_dir)
-        (image_name_jpg, q, t) = QueryLocalUtil.compare_upload_base_local_cv(sparse_dir, col_bin_dir, image_name_jpg,
-                                                                             fg_kp,
-                                                                             fg_des, params, self)
-        print("CVQueryLocal (image_name_jpg, q, t):" + str(
-            (image_name_jpg, q, t)) + " FIN")
-        return json.dumps((image_name_jpg, q, t), cls=Utils.NDArrayEncoder)
+    print("CVQueryLocal image_name_jpg: " + image_name_jpg)
+    print("CVQueryLocal sparse_dir_bank: " + sparse_dir)
+    (image_name_jpg, q, t) = QueryLocalUtil.compare_upload_base_local_cv(sparse_dir, col_bin_dir, image_name_jpg,
+                                                                         fg_kp,
+                                                                         fg_des, params)
+    print("CVQueryLocal (image_name_jpg, q, t):" + str(
+        (image_name_jpg, q, t)) + " FIN")
+    return jsonify(json.dumps((image_name_jpg, q, t), cls=Utils.NDArrayEncoder))
 
     ##
 
 
-class ImageBinInfo(Resource):
-    def post(self):
-        print("ImageBinInfo BEGIN, ")
-        json_data = request.get_json(force=True)
-        bank = json_data['bank']
-        the_image_name = json_data['image_name']
-        (workspace_dir, image_base_dir, json_base_dir, sparse_dir, database_dir, col_bin_dir) = Env.get_env_total_dir(
-            root_dir, bank,
-            self)
-        image_bin_path = Env.image_bin_path(sparse_dir, image_bin_name, self)
-        (image_id, qvec, tvec,
-         camera_id, image_name,
-         xys, point3D_ids) = read_model.read_images_binary_for_one(image_bin_path,
-                                                                   the_image_name)
-        print("ImageBinInfo (image_id, qvec, tvec, camera_id, image_name, xys, point3D_ids):" + str(
-            (image_id, qvec, tvec, camera_id, image_name, xys, point3D_ids)) + " FIN")
-        return json.dumps((image_id, qvec, tvec, camera_id, image_name, xys, point3D_ids), cls=Utils.NDArrayEncoder)
+@app.route('/capture-photo/imagebininfo', methods=['GET', 'POST'])
+def ImageBinInfo():
+    print("ImageBinInfo BEGIN, ")
+    json_data = request.get_json(force=True)
+    bank = json_data['bank']
+    the_image_name = json_data['image_name']
+    (workspace_dir, image_base_dir, json_base_dir, sparse_dir, database_dir, col_bin_dir) = Env.get_env_total_dir(
+        root_dir, bank)
+    image_bin_path = Env.image_bin_path(sparse_dir, image_bin_name)
+    (image_id, qvec, tvec,
+     camera_id, image_name,
+     xys, point3D_ids) = read_model.read_images_binary_for_one(image_bin_path,
+                                                               the_image_name)
+    print("ImageBinInfo (image_id, qvec, tvec, camera_id, image_name, xys, point3D_ids):" + str(
+        (image_id, qvec, tvec, camera_id, image_name, xys, point3D_ids)) + " FIN")
+    return jsonify(
+        json.dumps((image_id, qvec, tvec, camera_id, image_name, xys, point3D_ids), cls=Utils.NDArrayEncoder))
 
 
-class Query3DCouldPoint(Resource):
-    def post(self):
-        print("Query3DCouldPoint BEGIN, ")
-        json_data = request.get_json(force=True)
-        bank = json_data['bank']
-        params = json_data['params']
-        #
-        (workspace_dir, image_base_dir, json_base_dir, sparse_dir, database_dir, col_bin_dir) = Env.get_env_total_dir(
-            root_dir, bank,
-            self)
-        print("Query3DCouldPoint sparse_dir: " + sparse_dir)
-        (db_points_pos, db_points_des, dp_points_rgb) = Utils.load_all_3dmap_cloud_point(sparse_dir, col_bin_dir)
-        print("Query3DCouldPoint (db_points_pos, db_points_des, dp_points_rgb):" + str(
-            (db_points_pos, db_points_des, dp_points_rgb)) + " FIN")
-        return json.dumps((db_points_pos, db_points_des, dp_points_rgb), cls=Utils.NDArrayEncoder)
+# @auth.login_required
+@app.route('/capture-photo/query3dcloudpoint', methods=['GET', 'POST'])
+def Query3DCouldPoint():
+    print("Query3DCouldPoint BEGIN, ")
+    json_data = request.get_json(force=True)
+    bank = json_data['bank']
+    params = json_data['params']
+    #
+    (workspace_dir, image_base_dir, json_base_dir, sparse_dir, database_dir, col_bin_dir) = Env.get_env_total_dir(
+        root_dir, bank)
+    print("Query3DCouldPoint sparse_dir: " + sparse_dir)
+    (db_points_pos, db_points_des, dp_points_rgb) = Utils.load_all_3dmap_cloud_point(sparse_dir, col_bin_dir)
+    print("Query3DCouldPoint (db_points_pos, db_points_des, dp_points_rgb):" + str(
+        (db_points_pos, db_points_des, dp_points_rgb)) + " FIN")
+    return jsonify(json.dumps((db_points_pos, db_points_des, dp_points_rgb), cls=Utils.NDArrayEncoder))
 
 
 ## Actually setup the Api resource routing here
@@ -238,9 +248,9 @@ api.add_resource(CapturePhoto, '/capture-photo/captureb64')
 api.add_resource(StartMapConstruction, '/capture-photo/construct')
 api.add_resource(ClearWorkspace, '/capture-photo/clear')
 api.add_resource(QueryLocal, '/capture-photo/querylocal')
-api.add_resource(CVQueryLocal, '/capture-photo/cvquerylocal')
-api.add_resource(ImageBinInfo, '/capture-photo/imagebininfo')
-api.add_resource(Query3DCouldPoint, '/capture-photo/query3dcloudpoint')
+# api.add_resource(CVQueryLocal, '/capture-photo/cvquerylocal')
+# api.add_resource(ImageBinInfo, '/capture-photo/imagebininfo')
+# api.add_resource(Query3DCouldPoint, '/capture-photo/query3dcloudpoint')
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5444, debug=True)
