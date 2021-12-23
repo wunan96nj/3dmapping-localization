@@ -3,8 +3,9 @@
 import os
 
 
-def get_env_total_dir(root_dir, bank):
-    workspace_dir = root_dir + "workspace-" + str(bank) + "/"
+def get_env_total_dir(username, root_dir, bank):
+    user_dir = root_dir + username + "/"
+    workspace_dir = user_dir + "workspace-" + str(bank) + "/"
     image_base_dir = workspace_dir + "images/"
     json_base_dir = workspace_dir + "json/"
     sparse_dir = workspace_dir + "sparse/"
@@ -16,6 +17,8 @@ def get_env_total_dir(root_dir, bank):
     print("sparse_dir: " + sparse_dir)
     print("database_dir: " + database_dir)
     print("col_bin_dir: " + col_bin_dir)
+    if not os.path.exists(user_dir):
+        os.mkdir(user_dir)
     if not os.path.exists(workspace_dir):
         os.mkdir(workspace_dir)
     if not os.path.exists(image_base_dir):

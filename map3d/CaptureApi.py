@@ -26,7 +26,7 @@ database_name = env.str('database_name')
 
 @auth.verify_password
 def verify_password(username, password):
-    if username == 'user' and password == 'pass':
+    if username == 'sample_user' and password == 'pass':
         return True
     return False
 
@@ -64,7 +64,9 @@ def CapturePhoto():
     image_name = json_data['image_name']
     image_name = image_name.split('.')[0]
     b64 = json_data['b64']
+    username = auth.username();
     (workspace_dir, image_base_dir, json_base_dir, sparse_dir, database_dir, col_bin_dir) = MyEnv.get_env_total_dir(
+        username,
         root_dir, bank)
     (jpg_file_full_path, json_file_path) = MyEnv.get_jpg_json_file_path(image_base_dir, json_base_dir, image_name)
     CapturePhoto_save_files(json_data, jpg_file_full_path, json_file_path)
@@ -98,8 +100,9 @@ def StartMapConstruction():
 
 def StartMapConstruction_build(feature_dim, bank):
     print("StartMapConstruction build() start.....")
+    username = auth.username();
     (workspace_dir, image_base_dir, json_base_dir, sparse_dir, database_dir, col_bin_dir) = MyEnv.get_env_total_dir(
-        root_dir, bank)
+        username, root_dir, bank)
     print("1. feature_extractor")
     Utils.feature_colmap(COLMAP, database_name, database_dir, image_base_dir)
     # Utils.feature_cv(tmp_database_dir + database_name, image_dir)
@@ -118,8 +121,9 @@ def ClearWorkspace():
     print("ClearWorkspace BEGIN, ")
     json_data = request.get_json(force=True)
     bank = json_data['bank']
+    username = auth.username();
     (workspace_dir, image_base_dir, json_base_dir, sparse_dir, database_dir, col_bin_dir) = MyEnv.get_env_total_dir(
-        root_dir,
+        username, root_dir,
         bank)
     image_dir = image_base_dir + str(bank) + "/"
     json_dir = json_base_dir + str(bank) + "/"
@@ -142,8 +146,9 @@ def QueryLocal():
     bank = json_data['bank']
     b64 = json_data['b64']
     image_name = json_data['image_name']
+    username = auth.username();
     (workspace_dir, image_base_dir, json_base_dir, sparse_dir, database_dir, col_bin_dir) = MyEnv.get_env_total_dir(
-        root_dir, bank)
+        username, root_dir, bank)
     (
         image_name_prefix, upload_image_file_full_path,
         upload_database_file_full_path,
@@ -186,8 +191,9 @@ def CVQueryLocal():
     fg_des = numpy.array(fg_des).astype(numpy.uint8)
     params = numpy.array(params)
     #
+    username = auth.username();
     (workspace_dir, image_base_dir, json_base_dir, sparse_dir, database_dir, col_bin_dir) = MyEnv.get_env_total_dir(
-        root_dir, bank)
+        username, root_dir, bank)
 
     print("CVQueryLocal image_name_jpg: " + image_name_jpg)
     print("CVQueryLocal sparse_dir_bank: " + sparse_dir)
@@ -208,8 +214,9 @@ def ImageBinInfo():
     json_data = request.get_json(force=True)
     bank = json_data['bank']
     the_image_name = json_data['image_name']
+    username = auth.username();
     (workspace_dir, image_base_dir, json_base_dir, sparse_dir, database_dir, col_bin_dir) = MyEnv.get_env_total_dir(
-        root_dir, bank)
+        username, root_dir, bank)
     image_bin_path = MyEnv.image_bin_path(sparse_dir, image_bin_name)
     (image_id, qvec, tvec,
      camera_id, image_name,
@@ -229,8 +236,9 @@ def Query3DCouldPoint():
     bank = json_data['bank']
     params = json_data['params']
     #
+    username = auth.username();
     (workspace_dir, image_base_dir, json_base_dir, sparse_dir, database_dir, col_bin_dir) = MyEnv.get_env_total_dir(
-        root_dir, bank)
+        username, root_dir, bank)
     print("Query3DCouldPoint sparse_dir: " + sparse_dir)
     (db_points_pos, db_points_des, dp_points_rgb) = Utils.load_all_3dmap_cloud_point(sparse_dir, col_bin_dir)
     print("Query3DCouldPoint (db_points_pos, db_points_des, dp_points_rgb):" + str(

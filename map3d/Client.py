@@ -8,7 +8,7 @@ def main_test():
     # api_url = "https://api.immersal.com"
     api_url = "http://localhost:5444/capture-photo"
     token = "192b47014ee982495df0a08674ac49a11eca4cb4427e3115a0254b89d07587cc"
-    username = 'user'
+    username = 'sample_user'
     password = 'pass'
     image_base_dir = '/Users/akui/Desktop/south-building/images'
     seq_base = 0
