@@ -75,3 +75,24 @@ CaptureSDK.CVQueryLocal(api_url, token, uploadImagePath, bank)
 |token: |standby field, for future permission verification|
 |uploadImagePath: |the client image's full file path, like: /Users/akui/Desktop/south-building/images/P1180141.jpg|
 |bank: |workspace bank number like: 0|
+
+
+# **6. Query the whole 3D map cloud points**
+
+CaptureSDK.Query3DCouldPoint(api_url, token, bank, username, password)
+
+|Parameters:||
+| ----- | --------- |
+|api_url: |server url, like: http://localhost:5444/capture-photo|
+|token: |standby field, for future permission verification|
+|bank: |workspace bank number like: 0|
+
+# **7. Writing the whole 3D map cloud points to file**
+
+CaptureSDK.Write3dmap2PlyFile(db_points_pos, db_points_des, dp_points_rgb, ply_file_path)
+
+|Parameters:||
+| ----- | --------- |
+|db_points_des: | position info of 3d map, get it by Query3DCouldPoint      |
+|dp_points_rgb: | color info of 3d map, get it by Query3DCouldPoint                         |
+|ply_file_path: | the target file                                                     |
