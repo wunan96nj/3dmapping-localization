@@ -11,9 +11,9 @@ Using images to contribute 3D map
 
 import CaptureSDK
 
-CaptureSDK.ClearWorkspace(api_url, token, deleteAnchorImage, bank)
+CaptureSDK.ClearWorkspace(api_url, token, deleteAnchorImage, bank, username, password)
 
-CaptureSDK.post_to_server(api_url, token, image_base_dir, seq_base, bank)
+CaptureSDK.post_to_server(api_url, token, image_base_dir, seq_base, bank, username, password)
 
 |Parameters:||
 | ----- | --------- |
@@ -28,7 +28,7 @@ CaptureSDK.post_to_server(api_url, token, image_base_dir, seq_base, bank)
 
 import CaptureSDK
 
-CaptureSDK.StartMapConstruction(api_url, token, map_name, windowSize, feature_dim, bank)
+CaptureSDK.StartMapConstruction(api_url, token, map_name, windowSize, feature_dim, bank, username, password)
 
 |Parameters:||
 | ----- | --------- |
@@ -42,7 +42,7 @@ CaptureSDK.StartMapConstruction(api_url, token, map_name, windowSize, feature_di
 # **3. Clear the workspace(clear all data and files related the map)**
 
 import CaptureSDK
-CaptureSDK.ClearWorkspace(api_url, token, deleteAnchorImage, bank)
+CaptureSDK.ClearWorkspace(api_url, token, deleteAnchorImage, bank, username, password)
 
 |Parameters:||
 | ----- | --------- |
@@ -54,7 +54,7 @@ CaptureSDK.ClearWorkspace(api_url, token, deleteAnchorImage, bank)
 
 import CaptureSDK
 
-CaptureSDK.QueryLocal(api_url, token, uploadImagePath, bank)
+CaptureSDK.QueryLocal(api_url, token, uploadImagePath, bank, username, password)
 
 |Parameters:||
 | ----- | --------- |
@@ -67,7 +67,7 @@ CaptureSDK.QueryLocal(api_url, token, uploadImagePath, bank)
 
 import CaptureSDK
 
-CaptureSDK.CVQueryLocal(api_url, token, uploadImagePath, bank)
+CaptureSDK.CVQueryLocal(api_url, token, uploadImagePath, bank, username, password)
 
 |Parameters:||
 | ----- | --------- |
@@ -91,8 +91,9 @@ CaptureSDK.Query3DCouldPoint(api_url, token, bank, username, password)
 
 CaptureSDK.Write3dmap2PlyFile(db_points_pos, db_points_des, dp_points_rgb, ply_file_path)
 
-|Parameters:||
-| ----- | --------- |
-|db_points_des: | position info of 3d map, get it by Query3DCouldPoint      |
-|dp_points_rgb: | color info of 3d map, get it by Query3DCouldPoint                         |
-|ply_file_path: | the target file                                                     |
+| Parameters:    ||
+|----------------|------------------------------ |
+| db_points_pos  |position info of 3d map, get it by Query3DCouldPoint f 3d map, get it by Query3DCouldPoint |
+| db_points_des: | des info of 3d map, get it by Query3DCouldPoint      |
+| dp_points_rgb: | color info of 3d map, get it by Query3DCouldPoint    |
+| ply_file_path: | the target file                                      |
