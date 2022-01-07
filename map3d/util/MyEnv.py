@@ -4,7 +4,7 @@ import os
 
 
 def get_env_total_dir(username, root_dir, bank):
-    user_dir = root_dir + username + "/"
+    user_dir = root_dir + "/" + username + "/"
     workspace_dir = user_dir + "workspace-" + str(bank) + "/"
     image_base_dir = workspace_dir + "images/"
     json_base_dir = workspace_dir + "json/"

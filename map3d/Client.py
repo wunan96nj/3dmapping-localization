@@ -10,7 +10,7 @@ def main_test():
     token = "192b47014ee982495df0a08674ac49a11eca4cb4427e3115a0254b89d07587cc"
     username = 'sample_user'
     password = 'pass'
-    image_base_dir = '/Users/akui/Desktop/south-building/images'
+    image_base_dir = 'images'
     seq_base = 0
     map_name = "pyFirstMap"
     windowSize = 0
@@ -18,8 +18,8 @@ def main_test():
     bank = 2
     # feature_dim: colmap use 6, cv use 2
     feature_dim = 6
-    uploadImagePath = "/Users/akui/Desktop/south-building/images/P1180141.jpg"
-    cloudPlyFile = "/Users/akui/Desktop/cloudPlyFile.ply"
+    uploadImagePath = "images/P1180141.jpg"
+    cloudPlyFile = "cloudPlyFile.ply"
 
     print("post_to_server---------------BEGIN")
     print("ClearWorkspace...start...")
