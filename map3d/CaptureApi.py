@@ -2,8 +2,7 @@
 # -*- coding: utf-8 -*-
 import sys
 import os
-print(os.path.dirname(__file__))
-sys.path.append(os.path.dirname(__file__))
+
 #print(sys.path)
 import numpy
 import shutil
@@ -24,6 +23,7 @@ env = Env()
 env.read_env(path='server.env')
 COLMAP = env.str('COLMAP')
 root_dir = env.str('root_dir')
+print(root_dir)
 image_bin_name = env.str('image_bin_name')
 database_name = env.str('database_name')
 
@@ -73,13 +73,16 @@ def CapturePhoto():
         username,
         root_dir, bank)
     (jpg_file_full_path, json_file_path) = MyEnv.get_jpg_json_file_path(image_base_dir, json_base_dir, image_name)
+
     CapturePhoto_save_files(json_data, jpg_file_full_path, json_file_path)
+
     return jsonify(image_name=image_name,
                    jpg_file_full_path=jpg_file_full_path,
                    json_file_path=json_file_path)
 
 
 def CapturePhoto_save_files(json_data, image_file_full_path, json_file_full_path):
+    print(image_file_full_path)
     b64 = json_data['b64']
     json_data['b64'] = "omitted"
     Utils.write_to_file(b64, image_file_full_path, True)
@@ -129,7 +132,9 @@ def ClearWorkspace():
     (workspace_dir, image_base_dir, json_base_dir, sparse_dir, database_dir, col_bin_dir) = MyEnv.get_env_total_dir(
         username, root_dir,
         bank)
-    image_dir = image_base_dir + str(bank) + "/"
+    if os.path.exists(workspace_dir):
+        shutil.rmtree(workspace_dir, ignore_errors=True)
+    '''image_dir = image_base_dir + str(bank) + "/"
     json_dir = json_base_dir + str(bank) + "/"
     sparse_dir_bank = sparse_dir + str(bank) + "/"
     if os.path.exists(image_dir):
@@ -137,7 +142,7 @@ def ClearWorkspace():
     if os.path.exists(json_dir):
         shutil.rmtree(json_dir, ignore_errors=True)
     if os.path.exists(sparse_dir_bank):
-        shutil.rmtree(sparse_dir_bank, ignore_errors=True)
+        shutil.rmtree(sparse_dir_bank, ignore_errors=True)'''
     return jsonify();
     print("ClearWorkspace FIN")
 
