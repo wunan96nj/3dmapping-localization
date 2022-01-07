@@ -104,7 +104,7 @@ def feature_colmap(COLMAP, database_name, tmp_database_dir, image_dir):
 def match_colmap(COLMAP, database_name, tmp_database_dir, image_dir ):
     pIntrisics = subprocess.Popen(
         [COLMAP, "exhaustive_matcher", "--database_path",
-         tmp_database_dir + database_name, "--SiftExtraction.use_gpu", "false"])
+         tmp_database_dir + database_name, "--SiftMatching.use_gpu", "false"])
     pIntrisics.wait()
 
 
