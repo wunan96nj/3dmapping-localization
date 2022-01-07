@@ -97,7 +97,7 @@ def feature_colmap(COLMAP, database_name, tmp_database_dir, image_dir):
     pIntrisics = subprocess.Popen(
         [COLMAP, "feature_extractor", "--database_path",
          tmp_database_dir + database_name, "--image_path", image_dir,
-         "--ImageReader.camera_model", "SIMPLE_PINHOLE"])
+         "--ImageReader.camera_model", "SIMPLE_PINHOLE", "--SiftExtraction.use_gpu", "false"])
     pIntrisics.wait()
 
 
