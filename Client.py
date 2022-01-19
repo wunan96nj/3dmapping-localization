@@ -15,7 +15,7 @@ def main_test():
     map_name = "pyFirstMap"
     windowSize = 0
     deleteAnchorImage = True
-    bank = 2
+    bank = 0
     # feature_dim: colmap use 6, cv use 2
     feature_dim = 6
     uploadImagePath = "images/P1180141.jpg"
@@ -58,7 +58,7 @@ def main_test():
             (distance_q, distance_t)))
     print("QueryLocal---------------END")
     #
-    print("CVQueryLocal---------------BEGIN")
+    '''print("CVQueryLocal---------------BEGIN")
     (ret_image_name, ret_qvec, ret_tvec) = CaptureSDK.CVQueryLocal(
         api_url, token, uploadImagePath, bank, username, password)
     print(
@@ -75,7 +75,7 @@ def main_test():
     print(
         "(distance_q, distance_t):%s" % str(
             (distance_q, distance_t)))
-    print("CVQueryLocal---------------END")
+    print("CVQueryLocal---------------END")'''
 
     print("Query3DCouldPoint to file ---------------BEGIN")
     (db_points_pos, db_points_des, dp_points_rgb) = CaptureSDK.Query3DCouldPoint(api_url, token, bank, username,
