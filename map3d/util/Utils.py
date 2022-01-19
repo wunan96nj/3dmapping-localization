@@ -94,24 +94,24 @@ def feature_one_image_cv(img_name, img_folder):
 
 
 def feature_colmap(COLMAP, database_name, tmp_database_dir, image_dir):
-    '''pIntrisics = subprocess.Popen(
-        [COLMAP, "feature_extractor", "--database_path",
-         tmp_database_dir + database_name, "--image_path", image_dir,
-         "--ImageReader.camera_model", "SIMPLE_PINHOLE", "--SiftExtraction.use_gpu", "false"])'''
     pIntrisics = subprocess.Popen(
         [COLMAP, "feature_extractor", "--database_path",
          tmp_database_dir + database_name, "--image_path", image_dir,
-         "--ImageReader.camera_model", "SIMPLE_PINHOLE"])
+         "--ImageReader.camera_model", "SIMPLE_PINHOLE", "--SiftExtraction.use_gpu", "false"])
+    '''pIntrisics = subprocess.Popen(
+        [COLMAP, "feature_extractor", "--database_path",
+         tmp_database_dir + database_name, "--image_path", image_dir,
+         "--ImageReader.camera_model", "SIMPLE_PINHOLE"])'''
     pIntrisics.wait()
 
 
 def match_colmap(COLMAP, database_name, tmp_database_dir, image_dir ):
-    '''pIntrisics = subprocess.Popen(
-        [COLMAP, "exhaustive_matcher", "--database_path",
-         tmp_database_dir + database_name, "--SiftMatching.use_gpu", "false"])'''
     pIntrisics = subprocess.Popen(
         [COLMAP, "exhaustive_matcher", "--database_path",
-         tmp_database_dir + database_name])
+         tmp_database_dir + database_name, "--SiftMatching.use_gpu", "false"])
+    '''pIntrisics = subprocess.Popen(
+        [COLMAP, "exhaustive_matcher", "--database_path",
+         tmp_database_dir + database_name])'''
     pIntrisics.wait()
 
 
