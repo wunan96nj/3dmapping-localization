@@ -168,6 +168,8 @@ def QueryLocal():
         "QueryLocal upload_image_file_full_path: " + upload_image_file_full_path)
     print(
         "QueryLocal upload_database_file_full_path: " + upload_database_file_full_path)
+    print(
+        "QueryLocal upload_image_tmp_dir: " + upload_image_tmp_dir)
 
     QueryLocalUtil.save_image(b64, bank, upload_image_tmp_dir,
                               upload_image_file_full_path)
