@@ -180,6 +180,7 @@ def QueryLocal():
         image_name_prefix + ".jpg")
     print("QueryLocal (image_name_jpg, q, t):" + str(
         (image_name_jpg, q, t)) + " FIN")
+    shutil.rmtree(upload_image_tmp_dir, ignore_errors=True)
     return jsonify(json.dumps((image_name_jpg, q, t), cls=Utils.NDArrayEncoder))
 
     ##
