@@ -25,7 +25,7 @@ def write_xyz_to_point_cloud_file(db_points_pos, db_points_des, dp_points_rgb, p
     pcd.points = open3d.utility.Vector3dVector(db_points_pos)
     dp_points_rgb = numpy.array(dp_points_rgb)
     pcd.colors = open3d.utility.Vector3dVector(dp_points_rgb.astype(numpy.float64) / 255.0)
-    open3d.io.write_point_cloud(ply_file_path, pcd)
+    open3d.io.write_point_cloud(ply_file_path, pcd, write_ascii=True)
     return
 
 
